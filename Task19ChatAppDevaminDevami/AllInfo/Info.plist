@@ -21,5 +21,30 @@
 			</array>
 		</dict>
 	</dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb577331167894843</string>
+				<string>com.googleusercontent.apps.66948321507-nds44oplie5o1tak80ifhfifj3c9hm8k</string>
+			</array>
+		</dict>
+	</array>
+	<key>FacebookAppID</key>
+	<string>577331167894843</string>
+	<key>FacebookClientToken</key>
+	<string>3dd8d829d77bfd431993bbb44a5ca0b1</string>
+	<key>FacebookDisplayName</key>
+	<string>myChatApp</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>fbapi</string>
+		<string>fb-messenger-share-api</string>
+	</array>
+	<key>FacebookAutoLogAppEventsEnabled</key>
+	<true/>
+	<key>FacebookAdvertiserIDCollectionEnabled</key>
+	<true/>
 </dict>
 </plist>

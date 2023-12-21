@@ -7,15 +7,14 @@
 
 
 import UIKit
-import FirebaseAuth
 import FacebookLogin
 import GoogleSignIn
+import FirebaseAuth
+import FirebaseCore
 
 
-
-class LoginViewController: UIViewController {
-    
-    
+class LoginViewController: UIViewController{
+  
     
     private let scrollView : UIScrollView = {
         
@@ -83,36 +82,53 @@ class LoginViewController: UIViewController {
     }()
     
     private let facebookLoginButton : FBLoginButton = {
-       
+        
         let button = FBLoginButton()
         button.permissions = ["public_profile","email"] // Permission : İzin     public_profile : Kullanıcının adını ve soyadını içerir.
-      
+        
         return button
     }()
     
-    private let googleSignInButton : UIButton = {
-       
-        let button = UIButton()
-        button.setTitle("Google SignIn", for: .normal)
+    private let googleSignInButton : GIDSignInButton = {
+        
+        let button = GIDSignInButton()
+     /*   button.setTitle("Google SignIn", for: .normal)
         button.backgroundColor = .link
         button.setTitleColor(.white, for: .normal)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 23,weight: .bold)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 23,weight: .bold) */
         return button
     }()
     
+
     private let googleSignOutButton : UIButton = {
-       
+        
         let button = UIButton()
-        button.setTitle("Google SignOut", for: .normal)
+        button.setTitle("Google SignOut",for: .normal)
         button.backgroundColor = .link
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = UIFont.systemFont(ofSize: 23,weight: .bold)
         return button
     }()
+    
+    private var loginObserver : NSObjectProtocol? // Giriş gözlemcisi
+    
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+       
+       loginObserver = NotificationCenter.default.addObserver(
+                                               forName: Notification.Name.didLogInNotification,
+                                               object: nil,
+                                               queue: OperationQueue.main,
+                                               using: { [weak self] (_) in // Kullanım bir geri arama olacak ve bu buradaki bildirime iletecek.
+            
+           guard let strongSelf = self else {
+               return
+           }
+           
+           strongSelf.navigationController?.dismiss(animated: true,completion: nil) // Güçlü benlik NAVİGASYONU İPTAL ETSİN DEDİK.
+        })
         
         title = "Log In"
         view.backgroundColor = .white
@@ -128,6 +144,8 @@ class LoginViewController: UIViewController {
                               for: UIControl.Event.touchUpInside)
         // UIControl.Event.touchUpInside :Butonun sınırları içinde tıkladığı zaman işlem yapar.Çok farklı tipte seçenekler vardır.
         
+        googleSignInButton.addTarget(self, action: #selector(myGoogleSignIn), for: UIControl.Event.touchUpInside)
+        
         emailField.delegate = self
         passwordField.delegate = self
         
@@ -138,15 +156,18 @@ class LoginViewController: UIViewController {
         scrollView.addSubview(emailField)
         scrollView.addSubview(passwordField)
         scrollView.addSubview(loginBotton)
-      
+        
         scrollView.addSubview(facebookLoginButton)
         scrollView.addSubview(googleSignInButton)
-      //  scrollView.addSubview(googleSignOutButton)
+        //  scrollView.addSubview(googleSignOutButton)
         
-        
-       
     }
     
+    deinit {
+        if let observer = loginObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -203,8 +224,7 @@ class LoginViewController: UIViewController {
         
         // BURDA OTURUM AÇMAYI YANİ FİREBASE GİRİŞİNİ UYGULUCAZ.
         
-        FirebaseAuth.Auth.auth().signIn(withEmail: myEmail, password: myPassword,completion:
-                                            {
+        FirebaseAuth.Auth.auth().signIn(withEmail: myEmail, password: myPassword,completion: {
             
             [weak self] (authResult , error )  in
             
@@ -222,7 +242,6 @@ class LoginViewController: UIViewController {
             print("Şimdi UYGULAMANIN İÇERİĞİNİ GÖSTEREN  BAŞKA BİR EKRANA GEÇEBİLİRSİN.")
             
             strongSelf.navigationController?.dismiss(animated: true, completion: nil) //  Navigasyon kontrol cihazını GÖREVDEN ALDIM.
-            
             
         })
         
@@ -247,11 +266,87 @@ class LoginViewController: UIViewController {
         
     }
     
-   
     
+    @objc private func myGoogleSignIn(){
+        
+        print("google butonuna tıklandı." )
+        
+      /* guard let clientID = FirebaseApp.app()?.options.clientID else { return }
+        let config = GIDConfiguration(clientID: clientID)
+        GIDSignIn.sharedInstance.configuration = config */
+        
+        GIDSignIn.sharedInstance.signIn(withPresenting:self) {
+        
+       [unowned self]  (signInResult, error) in
+        
+             
+        guard error == nil else { return }
+            
+            
+        // Oturum açma başarılı olursa uygulamanın ana içerik Görünümünü görüntüleyin.
+        
+            guard  let user = signInResult?.user,let idToken = user.idToken?.tokenString
+            else{
+                return
+            }
+            
+            print("Google ile oturum açıldı.İşte Google ile oturum açan kullanıcının bilgileri : \(user) ")
+            
+            guard let email = user.profile?.email,
+                  let firstName = user.profile?.givenName, // givenName : Google ile giriş yapan kullanıcının adı
+                  let lastName = user.profile?.familyName
+            else {
+                return
+            }
+                    
+                    
+            DatabaseManager2.shared.userExist(with: email,completion:  {
+                
+                (exists) in
+                
+                if !exists { // Eğer KULLANICI DATABASE'DE  MEVCUT DEĞİLSE EKLİCEZ..
+                    DatabaseManager2.shared.insertUser(with: ChatAppUser2(firstName: firstName,
+                                                                          lastName: lastName,
+                                                                          emailAddress: email))
+                }
+            })
+            
+            
+            let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: user.accessToken.tokenString)
+           
+          Auth.auth().signIn(with: credential,completion: {
+                
+                (authresult, error) in
+
+                guard authresult != nil, error == nil else {
+                    print("Kullanıcı Google hesabıyla ( KİMLİĞİYLE )  giriş yapamadı.")
+                    return
+                }
+                
+            print("Kullanıcı GOOGLE HESABIYLA  ( KİMLİĞİYLE ) BAŞARILI BİR ŞEKİLDE GİRİŞ YAPTI.")
+                // Google ile oturum ama İŞLEMİ BAŞARIYLA TAMAMLANDIĞI İÇİN  ŞİMDİDE GOOGLE  BİR BİLDİRİMDEN YARARLANMAK ZORUNDADIR.
+                // O YÜZDEN ŞİMDİ ViewDidLoad()'A GİT ve burda => NotificationCenter'la ALAKALI KOD YAZDIK.Bu kodu kontrol et.
+              
+          NotificationCenter.default.post(name: .didLogInNotification, object: nil) // Giriş yapıldığının bilgisinin Bildirimini gönderdik.
+              
+            })
+            
+       
+        }
+
+        
+    }
+    
+ 
+    @IBAction func signinout( _ sender: Any) {
+        
+        GoogleSignIn.GIDSignIn.sharedInstance.signOut()
+    }
     
     
 }
+
+
 
 extension LoginViewController: UITextFieldDelegate { // Metnin düzenlenmesini ve doğrulanmasını yönetmek için kullandığımız bir PROTOCOL
     
@@ -275,7 +370,7 @@ extension LoginViewController: UITextFieldDelegate { // Metnin düzenlenmesini v
 
 
 
-extension LoginViewController: LoginButtonDelegate{
+extension LoginViewController: LoginButtonDelegate{  // Facebook ile giriş ENTEGRASYONU
     
     func loginButton(_ loginButton: FBLoginButton, didCompleteWith result: LoginManagerLoginResult?, error: Error?) {
         // Bu metot sayesinde Oturum açabildik mi açamadık mı bunu anlarız.
@@ -295,25 +390,25 @@ extension LoginViewController: LoginButtonDelegate{
                                                          httpMethod: .get)
         let facebookRequest2 = GraphRequest(graphPath: "me", parameters: ["fields" : "email,name"], tokenString: token, version: nil, httpMethod: .get)
         
-    
-        facebookRequest2.start(completion: {
+        
+        facebookRequest.start(completion: {
             
             (_,result,error) in // _ = connection 'u temsil etti. Alt çizgiyi ( _ ) DEĞİŞKENİ ATILABİLİR OLAN DEĞİŞKENLER YERİNE KULLANILIR.
             
             guard let result = result as? [String:Any],
-                      error == nil else {
+                  error == nil else {
                 print("FACEBOOK GRAFİK İSTEKLERİNDE BAŞARISIZ OLDUK.")
                 
                 return
             }
             
             /* Eposta ve Adı bilgilerini result sözlüğünden alıcaz.Ayrıca şunuda bil eğer facebook ile giriş yapan kullanıcının adı ve mail bilgileri veritabanında yoksa EKLEME işlemini
-               o zaman yaparız.
-               Facebook ile devam etmek bir KAYIT MEKANİZMASI DEĞİLDİR.
+             o zaman yaparız.
+             Facebook ile devam etmek bir KAYIT MEKANİZMASI DEĞİLDİR.
              */
             print(result)
             guard let userName = result["name"] as? String,
-                    let email = result["email"] as? String else {
+                  let email = result["email"] as? String else {
                 print("Facebook SUNUCUNDAN  KULLANICININ EPOSTA VE İSİM BİLGİSİ ALINAMADI.")
                 return
             }
@@ -327,7 +422,7 @@ extension LoginViewController: LoginButtonDelegate{
             let lastName = nameComponents[1]
             
             DatabaseManager2.shared.userExist(with: email,completion:
-            {
+                                                {
                 (exists) in
                 
                 if !exists { // Eğer bu emaile sahip kullanıcı veri tabanında YOKSA
@@ -342,7 +437,7 @@ extension LoginViewController: LoginButtonDelegate{
             let credential = FacebookAuthProvider.credential(withAccessToken: token) // credential = Kimlik FacebookAuthProvider = Facebook Kimlik Doğrulama sağlayıcısı
             //  VE ŞİMDİ Kullanıcının OTURUM AÇMASI İÇİN GEREKLİ OLAN BU KAPALI KİMLİĞİMİZİ ŞİMDİ KULLANICAZ.Çünkü kimliği Firebase kimliği ile değiştirdik.
             FirebaseAuth.Auth.auth().signIn(with: credential,completion: { // Kullanıcı ŞUAN  FACEBOOK İLE OTURUM AÇIYOR !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-              [weak self]  (authResult, error) in
+                [weak self]  (authResult, error) in
                 
                 guard let strongSelf = self else {
                     return
@@ -358,7 +453,7 @@ extension LoginViewController: LoginButtonDelegate{
                 
                 print("BAŞARILI YANİ KULLANICI FACEBOOK İLE OTURUM AÇABİLDİ.")
                 strongSelf.navigationController?.dismiss(animated: true, completion: nil) // Şimdi giriş ekranını kapatıcaz.Bellek sızıntısına neden olmamak için güçlü benliği
-                                                                                          // kapatıyoruz.
+                // kapatıyoruz.
             })
             
         } )
@@ -368,9 +463,9 @@ extension LoginViewController: LoginButtonDelegate{
     
     func loginButtonDidLogOut(_ loginButton: FBLoginButton) { // İşlem YAPMICAZ. ÇÜNKÜ :
         /*
-        - Facebook'un perde arkasında yaptığı şey şu bir facebook kullanıcısının oturum açmış olduğunu algılar.Düğme bizim durumumuzda KAPATMAYI gösterecek şekilde
+         - Facebook'un perde arkasında yaptığı şey şu bir facebook kullanıcısının oturum açmış olduğunu algılar.Düğme bizim durumumuzda KAPATMAYI gösterecek şekilde
          OTOMATİK OLARAK GÜNCELLENECEKTİR.
-        - Oturum açma görünümü denetleyicisini GÖSTERMEYECEĞİMİZ İÇİN geçerli değildir. BU NEDENLE HİÇBİR İŞLEM YAPMAYACAĞIZ.
+         - Oturum açma görünümü denetleyicisini GÖSTERMEYECEĞİMİZ İÇİN geçerli değildir. BU NEDENLE HİÇBİR İŞLEM YAPMAYACAĞIZ.
          */
     }
     
@@ -379,35 +474,8 @@ extension LoginViewController: LoginButtonDelegate{
 } // Facebook ile giriş ENTEGRASYONU
 
 
-extension LoginViewController  {
-    
-    
-    @IBAction func signinim( _ sender: Any) {
-        GIDSignIn.sharedInstance.signIn(withPresenting: self){
-            
-            (signInResult, error) in
-            
-            guard error == nil else { return }
 
-            // Oturum açma başarılı olursa uygulamanın ana içerik Görünümünü görüntüleyin.
-            guard let signInResult = signInResult else { return }
-            let user = signInResult.user
-            
-            let emailAddress = user.profile?.email
-            let fullName = user.profile?.name
-            let familyName = user.profile?.familyName
-            let profilePicUrl = user.profile?.imageURL(withDimension: 320)
-            
-            
-        }
-        
-    }
-    
-    @IBAction func signinout( _ sender: Any) {
-     
-        GIDSignIn.sharedInstance.signOut()
-    }
-}
+
 
 
 

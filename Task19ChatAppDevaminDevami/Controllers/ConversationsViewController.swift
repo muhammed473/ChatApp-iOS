@@ -16,12 +16,13 @@ class ConversationsViewController: UIViewController {
     // Varsayılan ayarlara göre kullanıcının oturum açıp açmadığını kontrol edicez.Eğer oturum AÇTIYSA  ekranda kalacağız yok eğer oturum AÇMADIYSA oturum açma ekranını göstericez.
     
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
+        print("Şuanda ConversationViewController scriptindeyiz.")
         // DatabaseManager.shared.test()  // Database'i ufaktan anlaman için örnek yaptık.
-        
+        view.backgroundColor = .yellow
     }
     
     override func viewDidAppear(_ animated: Bool) { // Ekran ( Görünüm ) göründükten HEMEN SONRA çalışır.
@@ -33,6 +34,7 @@ class ConversationsViewController: UIViewController {
     
     private func validateAuth() { // Kimlik Doğrulama Metodu
         
+   
         if FirebaseAuth.Auth.auth().currentUser == nil  {
             
             let vc = LoginViewController()
@@ -47,5 +49,5 @@ class ConversationsViewController: UIViewController {
 }
 
 
-}
+
 

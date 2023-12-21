@@ -7,20 +7,23 @@
 
 import UIKit
 import FirebaseAuth
-import FacebookLogin
+import FacebookLogin 
+import GoogleSignIn
 
 class ProfileViewController: UIViewController {
     
    
-    @IBOutlet var tableView : UITableView!
+  //  @IBOutlet var tableView : UITableView!
+    
+    @IBOutlet weak var tableView2: UITableView!
     
     let data = ["Log Out"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
-        tableView.delegate = self
-        tableView.dataSource = self
+        tableView2?.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        tableView2?.delegate = self
+        tableView2?.dataSource = self
         
     }
     
@@ -61,8 +64,11 @@ extension ProfileViewController : UITableViewDelegate,UITableViewDataSource{
             }
             
             // Şimdi FACEBOOK'TAN ÇIKIŞ YAPICAZ :
-            
             FacebookLogin.LoginManager().logOut()
+            
+            // Şimdi GOOGLE ile GİRİŞTEN ÇIKIŞ YAPICAZ :
+            GIDSignIn.sharedInstance.signOut()
+            
             
             do{
                 

@@ -8,6 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		9808C19C548DE29551B615A5 /* Pods_Task19ChatAppDevaminDevami.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61F20C46AA0ED2E62C125305 /* Pods_Task19ChatAppDevaminDevami.framework */; };
+		C403A3242B331CED005CF678 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C403A3232B331CED005CF678 /* GoogleService-Info.plist */; };
+		C48ABEBE2B2F4056005DB0D9 /* FacebookAEM in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEBD2B2F4056005DB0D9 /* FacebookAEM */; };
+		C48ABEC02B2F4056005DB0D9 /* FacebookBasics in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEBF2B2F4056005DB0D9 /* FacebookBasics */; };
+		C48ABEC22B2F4056005DB0D9 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEC12B2F4056005DB0D9 /* FacebookCore */; };
+		C48ABEC42B2F4056005DB0D9 /* FacebookGamingServices in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEC32B2F4056005DB0D9 /* FacebookGamingServices */; };
+		C48ABEC62B2F4056005DB0D9 /* FacebookLogin in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEC52B2F4056005DB0D9 /* FacebookLogin */; };
 		C4D785DC2B27D026008CB6EA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D785DB2B27D026008CB6EA /* AppDelegate.swift */; };
 		C4D785DE2B27D026008CB6EA /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D785DD2B27D026008CB6EA /* SceneDelegate.swift */; };
 		C4D785E02B27D026008CB6EA /* ConversationsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D785DF2B27D026008CB6EA /* ConversationsViewController.swift */; };
@@ -26,6 +32,8 @@
 
 /* Begin PBXFileReference section */
 		61F20C46AA0ED2E62C125305 /* Pods_Task19ChatAppDevaminDevami.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Task19ChatAppDevaminDevami.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C403A3232B331CED005CF678 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		C4293CB42B29286A00C5521D /* Task19ChatAppDevaminDevami.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Task19ChatAppDevaminDevami.entitlements; sourceTree = "<group>"; };
 		C4D785D82B27D026008CB6EA /* Task19ChatAppDevaminDevami.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Task19ChatAppDevaminDevami.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4D785DB2B27D026008CB6EA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		C4D785DD2B27D026008CB6EA /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -51,7 +59,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C48ABEC02B2F4056005DB0D9 /* FacebookBasics in Frameworks */,
+				C48ABEBE2B2F4056005DB0D9 /* FacebookAEM in Frameworks */,
+				C48ABEC62B2F4056005DB0D9 /* FacebookLogin in Frameworks */,
 				9808C19C548DE29551B615A5 /* Pods_Task19ChatAppDevaminDevami.framework in Frameworks */,
+				C48ABEC42B2F4056005DB0D9 /* FacebookGamingServices in Frameworks */,
+				C48ABEC22B2F4056005DB0D9 /* FacebookCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,7 +92,6 @@
 			isa = PBXGroup;
 			children = (
 				C4D785DA2B27D026008CB6EA /* Task19ChatAppDevaminDevami */,
-				C4D785E92B27D027008CB6EA /* Info.plist */,
 				C4D785D92B27D026008CB6EA /* Products */,
 				B1B5D7D510AE2A6D5B7D5D3B /* Pods */,
 				0A6B70A9DECC25CD2B3DBAF9 /* Frameworks */,
@@ -97,11 +109,12 @@
 		C4D785DA2B27D026008CB6EA /* Task19ChatAppDevaminDevami */ = {
 			isa = PBXGroup;
 			children = (
+				C4293CB42B29286A00C5521D /* Task19ChatAppDevaminDevami.entitlements */,
 				C4D785EF2B27D20E008CB6EA /* Resources */,
 				C4D785F42B27D317008CB6EA /* Controllers */,
 				C4D786022B27D522008CB6EA /* Views */,
 				C4D786032B27D546008CB6EA /* ViewModels */,
-				C4D786042B27D54E008CB6EA /* Model */,
+				C4D786042B27D54E008CB6EA /* AllInfo */,
 			);
 			path = Task19ChatAppDevaminDevami;
 			sourceTree = "<group>";
@@ -156,11 +169,13 @@
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		C4D786042B27D54E008CB6EA /* Model */ = {
+		C4D786042B27D54E008CB6EA /* AllInfo */ = {
 			isa = PBXGroup;
 			children = (
+				C403A3232B331CED005CF678 /* GoogleService-Info.plist */,
+				C4D785E92B27D027008CB6EA /* Info.plist */,
 			);
-			path = Model;
+			path = AllInfo;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -181,6 +196,13 @@
 			dependencies = (
 			);
 			name = Task19ChatAppDevaminDevami;
+			packageProductDependencies = (
+				C48ABEBD2B2F4056005DB0D9 /* FacebookAEM */,
+				C48ABEBF2B2F4056005DB0D9 /* FacebookBasics */,
+				C48ABEC12B2F4056005DB0D9 /* FacebookCore */,
+				C48ABEC32B2F4056005DB0D9 /* FacebookGamingServices */,
+				C48ABEC52B2F4056005DB0D9 /* FacebookLogin */,
+			);
 			productName = Task19ChatAppDevaminDevami;
 			productReference = C4D785D82B27D026008CB6EA /* Task19ChatAppDevaminDevami.app */;
 			productType = "com.apple.product-type.application";
@@ -209,6 +231,9 @@
 				Base,
 			);
 			mainGroup = C4D785CF2B27D026008CB6EA;
+			packageReferences = (
+				C48ABEBC2B2F4056005DB0D9 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */,
+			);
 			productRefGroup = C4D785D92B27D026008CB6EA /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -224,6 +249,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C4D785E82B27D027008CB6EA /* LaunchScreen.storyboard in Resources */,
+				C403A3242B331CED005CF678 /* GoogleService-Info.plist in Resources */,
 				C4D785E52B27D027008CB6EA /* Assets.xcassets in Resources */,
 				C4D785E32B27D026008CB6EA /* Main.storyboard in Resources */,
 			);
@@ -439,9 +465,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Task19ChatAppDevaminDevami/Task19ChatAppDevaminDevami.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4Q3P58HHV5;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Task19ChatAppDevaminDevami/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -468,9 +496,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Task19ChatAppDevaminDevami/Task19ChatAppDevaminDevami.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4Q3P58HHV5;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Task19ChatAppDevaminDevami/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -513,6 +543,45 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C48ABEBC2B2F4056005DB0D9 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/facebook/facebook-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C48ABEBD2B2F4056005DB0D9 /* FacebookAEM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C48ABEBC2B2F4056005DB0D9 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
+			productName = FacebookAEM;
+		};
+		C48ABEBF2B2F4056005DB0D9 /* FacebookBasics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C48ABEBC2B2F4056005DB0D9 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
+			productName = FacebookBasics;
+		};
+		C48ABEC12B2F4056005DB0D9 /* FacebookCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C48ABEBC2B2F4056005DB0D9 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
+			productName = FacebookCore;
+		};
+		C48ABEC32B2F4056005DB0D9 /* FacebookGamingServices */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C48ABEBC2B2F4056005DB0D9 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
+			productName = FacebookGamingServices;
+		};
+		C48ABEC52B2F4056005DB0D9 /* FacebookLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C48ABEBC2B2F4056005DB0D9 /* XCRemoteSwiftPackageReference "facebook-ios-sdk" */;
+			productName = FacebookLogin;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C4D785D02B27D026008CB6EA /* Project object */;
 }

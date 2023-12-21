@@ -8,7 +8,6 @@
 import Foundation
 import FirebaseDatabase
 
-
 final class DatabaseManager2 {
     
     static let shared = DatabaseManager2()

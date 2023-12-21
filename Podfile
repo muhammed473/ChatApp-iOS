@@ -6,5 +6,10 @@ target 'Task19ChatAppDevaminDevami' do
   use_frameworks!
 
   # Pods for Task19ChatAppDevaminDevami
+
+pod 'Firebase/Core'
+pod 'Firebase/Auth'
+pod 'Firebase/Database'
 pod 'GoogleSignIn'
+
 end
