@@ -8,10 +8,12 @@
 
 import UIKit
 import FirebaseAuth
+import JGProgressHUD // Yükleniyor imajını gösterme olayını bu kütüphaneyle yapıcaz.
+
 
 class RegisterViewController: UIViewController {
     
-    
+    private let spinner = JGProgressHUD(style: .dark)
     
     private let scrollView : UIScrollView = {
         
@@ -225,6 +227,8 @@ class RegisterViewController: UIViewController {
             return
         }
         
+        spinner.show(in: view) // Yükleniyor imajını(döndürücüyü, animasyon veya görüntü ) göster dedik. Mevcut görünümde göster demiş olduk.
+        
         // BURDA OTURUM AÇMAYI YANİ FİREBASE GİRİŞİNİ UYGULUCAZ.
         
         DatabaseManager2.shared.userExist(with: myEmails) {
@@ -232,6 +236,10 @@ class RegisterViewController: UIViewController {
             
             guard let strongSelf = self else {
                 return
+            }
+            
+            DispatchQueue.main.async {
+                strongSelf.spinner.dismiss()
             }
             
             guard !exists else {
@@ -290,6 +298,7 @@ class RegisterViewController: UIViewController {
 }
 
 
+
 extension RegisterViewController: UITextFieldDelegate { // Metnin düzenlenmesini ve doğrulanmasını yönetmek için kullandığımız bir PROTOCOL
     
     
@@ -311,6 +320,7 @@ extension RegisterViewController: UITextFieldDelegate { // Metnin düzenlenmesin
     
     
 }
+
 
 
 extension RegisterViewController: UIImagePickerControllerDelegate,UINavigationControllerDelegate { // Görüntü seçici denetleyici delegeleri

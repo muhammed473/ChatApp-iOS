@@ -14,6 +14,7 @@
 		C48ABEC22B2F4056005DB0D9 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEC12B2F4056005DB0D9 /* FacebookCore */; };
 		C48ABEC42B2F4056005DB0D9 /* FacebookGamingServices in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEC32B2F4056005DB0D9 /* FacebookGamingServices */; };
 		C48ABEC62B2F4056005DB0D9 /* FacebookLogin in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEC52B2F4056005DB0D9 /* FacebookLogin */; };
+		C4AB81512B37066800F83C3B /* ChatViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4AB81502B37066800F83C3B /* ChatViewController.swift */; };
 		C4D785DC2B27D026008CB6EA /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D785DB2B27D026008CB6EA /* AppDelegate.swift */; };
 		C4D785DE2B27D026008CB6EA /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D785DD2B27D026008CB6EA /* SceneDelegate.swift */; };
 		C4D785E02B27D026008CB6EA /* ConversationsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D785DF2B27D026008CB6EA /* ConversationsViewController.swift */; };
@@ -34,6 +35,7 @@
 		61F20C46AA0ED2E62C125305 /* Pods_Task19ChatAppDevaminDevami.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Task19ChatAppDevaminDevami.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C403A3232B331CED005CF678 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		C4293CB42B29286A00C5521D /* Task19ChatAppDevaminDevami.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Task19ChatAppDevaminDevami.entitlements; sourceTree = "<group>"; };
+		C4AB81502B37066800F83C3B /* ChatViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewController.swift; sourceTree = "<group>"; };
 		C4D785D82B27D026008CB6EA /* Task19ChatAppDevaminDevami.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Task19ChatAppDevaminDevami.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4D785DB2B27D026008CB6EA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		C4D785DD2B27D026008CB6EA /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -139,6 +141,7 @@
 				C4D785FC2B27D46D008CB6EA /* PhotoViewerViewController.swift */,
 				C4D785FE2B27D481008CB6EA /* ProfileViewController.swift */,
 				C4D786002B27D496008CB6EA /* VideoPlayerViewController.swift */,
+				C4AB81502B37066800F83C3B /* ChatViewController.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -314,6 +317,7 @@
 				C4D786012B27D496008CB6EA /* VideoPlayerViewController.swift in Sources */,
 				C4D785DC2B27D026008CB6EA /* AppDelegate.swift in Sources */,
 				C4D785DE2B27D026008CB6EA /* SceneDelegate.swift in Sources */,
+				C4AB81512B37066800F83C3B /* ChatViewController.swift in Sources */,
 				C4D785FD2B27D46D008CB6EA /* PhotoViewerViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -477,6 +481,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -508,6 +513,7 @@
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

@@ -11,10 +11,13 @@ import FacebookLogin
 import GoogleSignIn
 import FirebaseAuth
 import FirebaseCore
+import JGProgressHUD // Yükleniyor imajını gösterme olayını bu kütüphaneyle yapıcaz.
+
 
 
 class LoginViewController: UIViewController{
   
+    private let spinner = JGProgressHUD(style: .dark)
     
     private let scrollView : UIScrollView = {
         
@@ -72,7 +75,11 @@ class LoginViewController: UIViewController{
         
         let button = UIButton()
         button.setTitle("Log In", for: .normal)
-        button.backgroundColor = .link
+        if #available(iOS 13.0, *) {
+            button.backgroundColor = .link
+        } else {
+            // Fallback on earlier versions
+        }
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 12
         button.layer.masksToBounds = true
@@ -222,6 +229,8 @@ class LoginViewController: UIViewController{
             return
         }
         
+        spinner.show(in: view) // Yükleniyor imajını(döndürücüyü, animasyon veya görüntü ) göster dedik. Mevcut görünümde göster demiş olduk.
+        
         // BURDA OTURUM AÇMAYI YANİ FİREBASE GİRİŞİNİ UYGULUCAZ.
         
         FirebaseAuth.Auth.auth().signIn(withEmail: myEmail, password: myPassword,completion: {
@@ -231,13 +240,20 @@ class LoginViewController: UIViewController{
             guard let strongSelf = self else {
                 return
             }
+            DispatchQueue.main.async {
+                strongSelf.spinner.dismiss() // Kimlik doğrularken Yükleniyor imajını ( döndürücüyü ) kapattık.
+            }
+            
+            
             guard let result = authResult, error == nil else{
                 self?.alertUserLoginError()
                 print("Böyle bir kullanıcı YOK LÜTFEN bu uygulamaya İLK ÖNCE KAYDOLUN.")
                 return
             }
             
-            let user = authResult?.user
+          //  let user = authResult?.user // Burayı KENDİ ÖZGÜR İRADENLE SİLDİN ve YERİNE ŞUNU YAZDIN :
+            let user = result.user
+            
             print("Oturum açan kullanıcının bilgileri : \(user)")
             print("Şimdi UYGULAMANIN İÇERİĞİNİ GÖSTEREN  BAŞKA BİR EKRANA GEÇEBİLİRSİN.")
             
@@ -335,7 +351,7 @@ class LoginViewController: UIViewController{
         }
 
         
-    }
+    } // GOOGLE İLE GİRİŞ ENTEGRASYONU
     
  
     @IBAction func signinout( _ sender: Any) {
@@ -345,6 +361,7 @@ class LoginViewController: UIViewController{
     
     
 }
+
 
 
 
@@ -367,6 +384,7 @@ extension LoginViewController: UITextFieldDelegate { // Metnin düzenlenmesini v
     }
     
 }
+
 
 
 
@@ -471,7 +489,7 @@ extension LoginViewController: LoginButtonDelegate{  // Facebook ile giriş ENTE
     
     
     
-} // Facebook ile giriş ENTEGRASYONU
+} // FACEBOOK İLE GİRİŞ ENTEGRASYONU
 
 
 

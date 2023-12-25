@@ -10,9 +10,10 @@ import FirebaseAuth
 import FacebookLogin 
 import GoogleSignIn
 
+
 class ProfileViewController: UIViewController {
     
-   
+    let vc = LoginViewController()
   //  @IBOutlet var tableView : UITableView!
     
     @IBOutlet weak var tableView2: UITableView!
@@ -74,6 +75,7 @@ extension ProfileViewController : UITableViewDelegate,UITableViewDataSource{
                 
               try  FirebaseAuth.Auth.auth().signOut() // Oturumu kapattık ve şimdi Oturum açma ekranına yönlendiriyoruz :
                 
+              
                 let vc = LoginViewController()
                 let nav = UINavigationController(rootViewController: vc)
                 nav.modalPresentationStyle = UIModalPresentationStyle.fullScreen

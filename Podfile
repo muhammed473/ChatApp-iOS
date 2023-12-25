@@ -10,6 +10,16 @@ target 'Task19ChatAppDevaminDevami' do
 pod 'Firebase/Core'
 pod 'Firebase/Auth'
 pod 'Firebase/Database'
+pod 'Firebase/Storage' 
 pod 'GoogleSignIn'
+
+
+# Building User Interface and Dependencies ( Kullanıcı arayüzü ve Bağımlılıkları oluşturmak )
+
+pod 'MessageKit'
+ pod 'JGProgressHUD', '~> 2.2'
+pod 'RealmSwift'
+pod 'SDWebImage'
+
 
 end
