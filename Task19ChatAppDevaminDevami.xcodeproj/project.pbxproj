@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		9808C19C548DE29551B615A5 /* Pods_Task19ChatAppDevaminDevami.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61F20C46AA0ED2E62C125305 /* Pods_Task19ChatAppDevaminDevami.framework */; };
 		C403A3242B331CED005CF678 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C403A3232B331CED005CF678 /* GoogleService-Info.plist */; };
+		C431160B2B3A563500602424 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C431160A2B3A563500602424 /* StorageManager.swift */; };
 		C48ABEBE2B2F4056005DB0D9 /* FacebookAEM in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEBD2B2F4056005DB0D9 /* FacebookAEM */; };
 		C48ABEC02B2F4056005DB0D9 /* FacebookBasics in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEBF2B2F4056005DB0D9 /* FacebookBasics */; };
 		C48ABEC22B2F4056005DB0D9 /* FacebookCore in Frameworks */ = {isa = PBXBuildFile; productRef = C48ABEC12B2F4056005DB0D9 /* FacebookCore */; };
@@ -35,6 +36,7 @@
 		61F20C46AA0ED2E62C125305 /* Pods_Task19ChatAppDevaminDevami.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Task19ChatAppDevaminDevami.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C403A3232B331CED005CF678 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		C4293CB42B29286A00C5521D /* Task19ChatAppDevaminDevami.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Task19ChatAppDevaminDevami.entitlements; sourceTree = "<group>"; };
+		C431160A2B3A563500602424 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
 		C4AB81502B37066800F83C3B /* ChatViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewController.swift; sourceTree = "<group>"; };
 		C4D785D82B27D026008CB6EA /* Task19ChatAppDevaminDevami.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Task19ChatAppDevaminDevami.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C4D785DB2B27D026008CB6EA /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -128,6 +130,7 @@
 				C4D785DD2B27D026008CB6EA /* SceneDelegate.swift */,
 				C4D785F02B27D235008CB6EA /* DatabaseManager.swift */,
 				C4D785F22B27D243008CB6EA /* Extensions.swift */,
+				C431160A2B3A563500602424 /* StorageManager.swift */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -319,6 +322,7 @@
 				C4D785DE2B27D026008CB6EA /* SceneDelegate.swift in Sources */,
 				C4AB81512B37066800F83C3B /* ChatViewController.swift in Sources */,
 				C4D785FD2B27D46D008CB6EA /* PhotoViewerViewController.swift in Sources */,
+				C431160B2B3A563500602424 /* StorageManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

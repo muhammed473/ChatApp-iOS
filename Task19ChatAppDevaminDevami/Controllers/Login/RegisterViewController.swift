@@ -18,7 +18,7 @@ class RegisterViewController: UIViewController {
     private let scrollView : UIScrollView = {
         
         let scrollView = UIScrollView()
-        scrollView.clipsToBounds = true // True olarak ayarladığımızda alt görünümlerin görünümün sınırlarına göre KIRPILMASINI SAĞLAR.
+        scrollView.clipsToBounds = true // True olarak ayarladığımızda alt görünümlerin GÖRÜNÜMÜN SINIRLARINA GÖRE  KIRPILMASINI SAĞLAR.
         return scrollView
         
     }()
@@ -248,11 +248,9 @@ class RegisterViewController: UIViewController {
                 return
             }
             
-            FirebaseAuth.Auth.auth().createUser(withEmail: myEmails , password: myPassword,completion:
-                                                    {
+            FirebaseAuth.Auth.auth().createUser(withEmail: myEmails , password: myPassword,completion: {
                 
                 (aultResult,error)  in
-                
                 
                 guard  aultResult != nil, error == nil else {
                     print("Error creating user.( Kullanıcı oluşturma hatası.)")
@@ -260,9 +258,39 @@ class RegisterViewController: UIViewController {
                 }
                 
                 //  BURASI ÖNEMLİ DİKKAT ET ! ! !  ==>  Yani Authentication 'da(Kimlik doğrulamada) HESABI OLUŞTURURKEN VERİTABANI YÖNETİCİSİNİ ÇAĞIRARAK VERİTABANIMIZA KULLANICININ GİRDİĞİ  isim,soyisim ve email bilgilerini KAYDETTİK.
-                DatabaseManager2.shared.insertUser(with: ChatAppUser2(firstName:firstName ,
-                                                                      lastName: lastName,
-                                                                      emailAddress: myEmails))
+                let chatUser = ChatAppUser2(firstName:firstName ,
+                                            lastName: lastName,
+                                            emailAddress: myEmails)
+                
+                DatabaseManager2.shared.insertUser(with: chatUser) {
+                    
+                    (succes) in //  Kullanıcıyı Veritabanına kaydetme işlemi BAŞARILI MI  BUNU KONTROL EDİCEZ.
+                    
+                    if succes {
+                        
+                        guard  let image = strongSelf.imageView.image,
+                               let data = image.pngData() else {
+                            return
+                        }
+                        
+                        let filename = chatUser.profilePictureFileName
+                        StorageManager.shared.uploadProfilePicture(with: data, fileName: filename,completion: {
+                            
+                            (result) in
+                            
+                            switch result {
+                                
+                            case .success(let downloadUrl) :
+                                // ŞİMDİ depomuza kaydetmek istiyoruz.Bu yüzden ÖNBELLEKLERİMİZE KAYDETMEK YERİNE USERDEFAULTS'I(KULLANICI VARSAYILANLARINI) KULLANICAZ !!!!!!
+                                UserDefaults.standard.set(downloadUrl, forKey: "profile_picture_url")
+                                print("Download url şuymuş : \(downloadUrl)")
+                            case .failure(let error):
+                                print("Storage Manager(Depolama ALanı) Yöneticisi hatası var. \(error)")
+                            }
+                        })
+                        
+                    } // Eğer kullanıcıyı veritabanına kaydetme işlemi BAŞARILIYSA o KULLANICININ RESMİNİDE  FirebaseStorage'a ( Depolama Alanına ) ŞİMDİ KAYDEDİCEZ.
+                }
                 
                 strongSelf.navigationController?.dismiss(animated: true, completion: nil) //  Navigasyon kontrol cihazını GÖREVDEN ALDIM.
                 

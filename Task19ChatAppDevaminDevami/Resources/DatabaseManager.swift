@@ -14,9 +14,8 @@ final class DatabaseManager2 {
     
     private let database = Database.database().reference()
     
-   /* public func test () { --> ConversationViewController 'a git. [ Database'i ufaktan anlaman için
-                                                                     örnek yaptık. ]
-        
+   /* public func test () { --> ConversationViewController 'a git. [ Database'i ufaktan anlaman için örnek yaptık. ]
+          
         database.child("foo").setValue(["something":true])
         
     } */
@@ -29,7 +28,7 @@ struct ChatAppUser2 {
     let firstName : String
     let lastName : String
     let emailAddress : String
-//  let profilePictureUrl : String
+
     
     var safeEmail : String {
         var safeEmail = emailAddress.replacingOccurrences(of: ".", with: "-") // replacingOccurrences : Olayların değiştirilmesi( Yani syntax'leri değiştirdik.)
@@ -37,7 +36,10 @@ struct ChatAppUser2 {
         return safeEmail
     }
    
-    
+    var profilePictureFileName : String{
+        //mamiankara10-gmail-com_profile_picture.png
+        return "\(safeEmail)_profile-picture.png"
+    } // Bu yapı"computed property(hesaplanmış özellik)'tir.Her çağrıldığında YENİ değer hesaplamak için bir getter(alıcı) fonksiyonunu kullanır.
     
 }
 
@@ -74,15 +76,25 @@ extension DatabaseManager2 {
         
     }
     
-    ///  Veri tabanına yeni kullanıcı ekler. [Not : /// ÜÇ TANE EĞİK ÇİZĞİ bu yazım tipine dönüştürdü.(büyük projelerde bu ÜÇ TANE EĞİK ÇİZĞİ KULLANILIR.]
-    public func insertUser(with user : ChatAppUser2 ) {
-      //   with : Bir anahtar kelime değildir - sadece harici bir parametre tanımlayıcısıdır.
-        
+    ///  Veri tabanına yeni kullanıcı ekler.
+    public func insertUser(with user : ChatAppUser2,completion: @escaping(Bool) -> Void ) {  //   with : Bir anahtar kelime değildir - sadece harici bir parametre tanımlayıcısıdır.
+     
         database.child(user.safeEmail).setValue( // Yani veritabanında aynı İSİMLİ MAİL ADRESLERİ OLAMAZ DEMİŞ OLDUK.
         [
             "first_name" : user.firstName,
             "last_name" : user.lastName
-        ] )
+        ], withCompletionBlock: {
+            
+            (error , _ ) in // Burdaki _(Alt Çizgi) veritabanı(database) referansı beklediğini söylüyor ancak biz bunu KULLANMAYACAĞIMIZ için _(Alt Çizgi) koyduk.
+            
+            guard  error == nil else {
+                print("Veritabanına kaydedilme olayı BAŞARISIZ !!")
+                completion(false)
+                return
+            }
+            completion(true)
+        } )
+        
     }
     
     

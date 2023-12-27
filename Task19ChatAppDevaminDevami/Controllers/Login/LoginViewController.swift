@@ -321,9 +321,20 @@ class LoginViewController: UIViewController{
                 (exists) in
                 
                 if !exists { // Eğer KULLANICI DATABASE'DE  MEVCUT DEĞİLSE EKLİCEZ..
-                    DatabaseManager2.shared.insertUser(with: ChatAppUser2(firstName: firstName,
-                                                                          lastName: lastName,
-                                                                          emailAddress: email))
+                    
+                    let chatUser = ChatAppUser2(firstName: firstName,
+                                                lastName: lastName,
+                                                emailAddress: email)
+                    
+                    DatabaseManager2.shared.insertUser(with:chatUser) {
+                        
+                        (succes) in //  Kullanıcıyı Veritabanına kaydetme işlemi BAŞARILI MI  BUNU KONTROL EDİCEZ.
+                        
+                        if succes {
+                            
+                        } //  Eğer kullanıcıyı veritabanına kaydetme işlemi BAŞARILIYSA o KULLANICININ RESMİNİDE  FirebaseStorage'a ( Depolama Alanına ) ŞİMDİ KAYDEDİCEZ.
+                        
+                    }
                 }
             })
             
@@ -444,9 +455,17 @@ extension LoginViewController: LoginButtonDelegate{  // Facebook ile giriş ENTE
                 (exists) in
                 
                 if !exists { // Eğer bu emaile sahip kullanıcı veri tabanında YOKSA
-                    DatabaseManager2.shared.insertUser(with: ChatAppUser2(firstName: firstName,
-                                                                          lastName: lastName,
-                                                                          emailAddress: email))
+                    let chatUser = ChatAppUser2(firstName: firstName,
+                                                lastName: lastName,
+                                                emailAddress: email)
+                    DatabaseManager2.shared.insertUser(with:chatUser) {
+                        
+                        (succes) in // Kullanıcıyı Veritabanına kaydetme işlemi BAŞARILI MI  BUNU KONTROL EDİCEZ.
+                        
+                        if succes {
+                            
+                        } // Eğer kullanıcıyı veritabanına kaydetme işlemi BAŞARILIYSA o KULLANICININ RESMİNİDE  FirebaseStorage'a ( Depolama Alanına ) ŞİMDİ KAYDEDİCEZ.
+                    }
                 }
             })
             
