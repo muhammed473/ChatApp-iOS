@@ -332,8 +332,41 @@ class LoginViewController: UIViewController{
                         
                         if succes {
                             
-                        } //  Eğer kullanıcıyı veritabanına kaydetme işlemi BAŞARILIYSA o KULLANICININ RESMİNİDE  FirebaseStorage'a ( Depolama Alanına ) ŞİMDİ KAYDEDİCEZ.
-                        
+                            if ((user.profile?.hasImage) != nil) { // Google ile giriş yapan kullanıcının profil resminin olup olmadığını kontrol ediyoruz :
+                                
+                                guard  let url = user.profile?.imageURL(withDimension: 200) else { // withDimension = Profil resminin genişliği ve yüksekliği 200  olarak al.
+                                    return
+                                }
+                    
+                                URLSession.shared.dataTask(with: url, completionHandler: {
+                                    
+                                    (data,_,_) in
+                                    
+                                    guard let data = data else {
+                                        return
+                                    }
+                                    
+                                    let filename = chatUser.profilePictureFileName
+                                    StorageManager.shared.uploadProfilePicture(with: data, fileName: filename,completion: {
+                                        
+                                        (result) in
+                                        
+                                        switch result {
+                                            
+                                        case .success(let downloadUrl) :
+                                            // ŞİMDİ depomuza kaydetmek istiyoruz.Bu yüzden ÖNBELLEKLERİMİZE KAYDETMEK YERİNE USERDEFAULTS'I(KULLANICI VARSAYILANLARINI) KULLANICAZ !!!!!!
+                                            UserDefaults.standard.set(downloadUrl, forKey: "profile_picture_url")
+                                            print("Download url şuymuş : \(downloadUrl)")
+                                        case .failure(let error):
+                                            print("Storage Manager(Depolama ALanı) Yöneticisi hatası var. \(error)")
+                                        }
+                                    })
+                                    
+                                }).resume()
+                                
+                                
+                            } //  Eğer kullanıcıyı veritabanına kaydetme işlemi BAŞARILIYSA o KULLANICININ RESMİNİDE  FirebaseStorage'a ( Depolama Alanına ) ŞİMDİ KAYDEDİCEZ.
+                        }
                     }
                 }
             })
@@ -413,12 +446,10 @@ extension LoginViewController: LoginButtonDelegate{  // Facebook ile giriş ENTE
         }
         
         let facebookRequest = FBSDKLoginKit.GraphRequest(graphPath: "/me",             // Facebook ile oturum açmış kişinin email ve adının olduğu  bilgilerini ALDIK !!!!!!
-                                                         parameters: ["fields" : "email,name"],
+                                                         parameters: ["fields" : "email,first_name,last_name,picture.type(large)"],
                                                          tokenString: token,
                                                          version: nil,
                                                          httpMethod: .get)
-        let facebookRequest2 = GraphRequest(graphPath: "me", parameters: ["fields" : "email,name"], tokenString: token, version: nil, httpMethod: .get)
-        
         
         facebookRequest.start(completion: {
             
@@ -431,24 +462,25 @@ extension LoginViewController: LoginButtonDelegate{  // Facebook ile giriş ENTE
                 return
             }
             
-            /* Eposta ve Adı bilgilerini result sözlüğünden alıcaz.Ayrıca şunuda bil eğer facebook ile giriş yapan kullanıcının adı ve mail bilgileri veritabanında yoksa EKLEME işlemini
+            /* Eposta ve Adı,soyadı bilgilerini ( result sözlüğünden alıcaz.Ayrıca şunuda bil eğer facebook ile giriş yapan kullanıcının adı ve mail bilgileri veritabanında yoksa EKLEME işlemini
              o zaman yaparız.
              Facebook ile devam etmek bir KAYIT MEKANİZMASI DEĞİLDİR.
              */
-            print(result)
-            guard let userName = result["name"] as? String,
-                  let email = result["email"] as? String else {
+            
+            print(result) // Bu Print çıktısını console 'da iyi incele.Çünkü aşağıdaki kısmı ona göre daha iyi anlarsın
+           
+            
+            guard let firstName = result["first_name"] as? String,
+                  let lastName = result["last_name"] as? String,
+                  let email = result["email"] as? String,
+                  let picture = result["picture"] as? [String:Any],
+                  let data = picture["data"] as? [String:Any],
+                  let pictureUrl = data["url"] as? String
+            else {
                 print("Facebook SUNUCUNDAN  KULLANICININ EPOSTA VE İSİM BİLGİSİ ALINAMADI.")
                 return
             }
             
-            let nameComponents = userName.components(separatedBy: " ") // boşluk ile ayırdık.
-            guard nameComponents.count == 2 else {
-                return
-            }
-            
-            let firstName = nameComponents[0]
-            let lastName = nameComponents[1]
             
             DatabaseManager2.shared.userExist(with: email,completion:
                                                 {
@@ -464,7 +496,42 @@ extension LoginViewController: LoginButtonDelegate{  // Facebook ile giriş ENTE
                         
                         if succes {
                             
-                        } // Eğer kullanıcıyı veritabanına kaydetme işlemi BAŞARILIYSA o KULLANICININ RESMİNİDE  FirebaseStorage'a ( Depolama Alanına ) ŞİMDİ KAYDEDİCEZ.
+                            guard let url = URL(string: pictureUrl) else {
+                                return
+                            }
+                            
+                            print("Facebook'taki profil resmimden veri indirmek..")
+                            
+                            URLSession.shared.dataTask(with: url, completionHandler:
+                            {
+                                (data,_,_) in
+                                
+                                guard let data = data else {
+                                    print("Facebooktan resim verisini alınamadı.")
+                                    return
+                                }
+                                
+                                print("Facebooktan profil resmi  için veri aldım şimdi resmi Firebase'e yüklücem..")
+                                
+                                 let filename = chatUser.profilePictureFileName
+                                 StorageManager.shared.uploadProfilePicture(with: data, fileName: filename,completion: {
+                                     
+                                     (result) in
+                                     
+                                     switch result {
+                                         
+                                     case .success(let downloadUrl) :
+                                         // ŞİMDİ depomuza kaydetmek istiyoruz.Bu yüzden ÖNBELLEKLERİMİZE KAYDETMEK YERİNE USERDEFAULTS'I(KULLANICI VARSAYILANLARINI) KULLANICAZ !!!!!!
+                                         UserDefaults.standard.set(downloadUrl, forKey: "profile_picture_url")
+                                         print("Download url şuymuş : \(downloadUrl)")
+                                     case .failure(let error):
+                                         print("Storage Manager(Depolama Alanı) Yöneticisi hatası var. \(error)")
+                                     }
+                                 })
+                                
+                            }).resume()
+                            
+                        } // Eğer kullanıcıyı veritabanına kaydetme işlemi BAŞARILIYSA o KULLANICININ RESMİNİDE  FirebaseStorage'a ( Depolama Alanına ) ŞİMDİ KAYDEDİCEZ. */
                     }
                 }
             })
