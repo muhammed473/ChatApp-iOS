@@ -42,8 +42,12 @@
 		<string>fbapi</string>
 		<string>fb-messenger-share-api</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Lütfen profil resmi çekmek için izin verin.</string>
 	<key>FacebookAutoLogAppEventsEnabled</key>
 	<true/>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Profil resminiz için Kütüphaneden fotoğraf çekme işleminize izin verin.</string>
 	<key>FacebookAdvertiserIDCollectionEnabled</key>
 	<true/>
 </dict>

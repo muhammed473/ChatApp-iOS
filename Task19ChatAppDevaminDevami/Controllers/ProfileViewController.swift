@@ -13,21 +13,84 @@ import GoogleSignIn
 
 class ProfileViewController: UIViewController {
     
-    let vc = LoginViewController()
-  //  @IBOutlet var tableView : UITableView!
-    
     @IBOutlet weak var tableView2: UITableView!
     
+    let vc = LoginViewController()
     let data = ["Log Out"]
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView2.tableHeaderView = createTableHeader()
         tableView2?.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         tableView2?.delegate = self
         tableView2?.dataSource = self
+      
+        
         
     }
     
+    func createTableHeader() -> UIView? {
+        
+        // Şimdi Daha önce UserDefault'a kaydettiğimiz kullanıcının mailini burda çıkartmamız(almamız) lazım.
+        guard let email = UserDefaults.standard.value(forKey: "email") as? String else {
+            return nil
+        }
+        
+        let safeEmail = DatabaseManager2.safeEmail(emailAddress: email)
+        let filename = safeEmail + "_profile-picture.png"
+        
+        let path = "images/" + filename
+    
+        let headerView = UIView(frame: CGRect(x: 0, y: 0, width: self.view.widthss, height: 300))
+        headerView.backgroundColor = .link
+        
+        let imageView = UIImageView(frame: CGRect(x: (headerView.widthss - 150) / 2, y: 75, width: 150, height: 150))
+        imageView.contentMode = .scaleAspectFill
+        imageView.backgroundColor = .white
+        imageView.layer.borderColor = UIColor.white.cgColor
+        imageView.layer.borderWidth = 3
+        imageView.layer.cornerRadius = imageView.widthss/2
+        imageView.layer.masksToBounds = true // Bir görünümün içeriğini, görünümün sınırları içinde sığdırabilme özelliğinin ayarlanabilmesidir.Burdada sığdır demiş olduk.
+        
+        headerView.addSubview(imageView)
+        
+        StorageManager.shared.downloadURL(for: path, completion: {
+           
+           [weak self] (result) in
+            
+            switch result {
+                
+            case .success(let url) :
+                self?.downloadImage(imageView: imageView, url: url)
+            case .failure(let error):
+                print("İhtiyacımız olan indirme url'sini alamadık :gdfgdgd \(error)")
+            }
+            
+        })
+        
+       
+        return headerView
+        
+    }
+    
+    func downloadImage(imageView: UIImageView,url : URL) {
+        
+        URLSession.shared.dataTask(with: url,completionHandler:  {
+            
+           (data,_,error) in
+            
+            guard let data = data, error == nil else{
+                return
+            }
+            
+            DispatchQueue.main.async {
+                let image = UIImage(data: data)
+                imageView.image = image
+            }
+            
+        }).resume()
+        
+    }
 
     
 }

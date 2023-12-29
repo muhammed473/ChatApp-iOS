@@ -251,8 +251,13 @@ class LoginViewController: UIViewController{
                 return
             }
             
-          //  let user = authResult?.user // Burayı KENDİ ÖZGÜR İRADENLE SİLDİN ve YERİNE ŞUNU YAZDIN :
+        
             let user = result.user
+            
+            /*
+            Kullanıcı e postasını User Defaults'a(Kullanıcı Varsayılanları ÖnBelleğine) şimdi kaydetmemizin nedeni şu : Firebase Storage'ın görseller için STANDARTLAŞTIRILMIŞ bir formata sahiptir FirebaseStorage kısmına bakarsın ne demek istediğimizi daha iyi anlarsın.
+             Bu FirebaseStorage'da STANDARTLAŞTIRILMIŞ FORMAT SAYESİNDE BİZDE KULLANICININ GÖRSELİNİ SORGULAMAK İÇİN MAİL'İ KULLANICAZ ve kullanıcıları ve haliyle GÖRSELLERİNİ PROFİL SEKMESİNDE GÖSTERİCEZ !!! */     // ÇOK ÖNEMLİ SAKIN SİLME
+            UserDefaults.standard.set(myEmail, forKey: "email")
             
             print("Oturum açan kullanıcının bilgileri : \(user)")
             print("Şimdi UYGULAMANIN İÇERİĞİNİ GÖSTEREN  BAŞKA BİR EKRANA GEÇEBİLİRSİN.")
@@ -314,8 +319,13 @@ class LoginViewController: UIViewController{
             else {
                 return
             }
-                    
-                    
+            
+            /*
+            Kullanıcı e postasını User Defaults'a(Kullanıcı Varsayılanları ÖnBelleğine) şimdi kaydetmemizin nedeni şu : Firebase Storage'ın görseller için STANDARTLAŞTIRILMIŞ bir formata sahiptir FirebaseStorage kısmına bakarsın ne demek istediğimizi daha iyi anlarsın.
+             Bu FirebaseStorage'da STANDARTLAŞTIRILMIŞ FORMAT SAYESİNDE BİZDE KULLANICININ GÖRSELİNİ SORGULAMAK İÇİN MAİL'İ KULLANICAZ ve kullanıcıları ve haliyle GÖRSELLERİNİ PROFİL SEKMESİNDE GÖSTERİCEZ !!! */     // ÇOK ÖNEMLİ SAKIN SİLME
+             
+            UserDefaults.standard.setValue(email, forKey: "email")
+                   
             DatabaseManager2.shared.userExist(with: email,completion:  {
                 
                 (exists) in
@@ -481,6 +491,11 @@ extension LoginViewController: LoginButtonDelegate{  // Facebook ile giriş ENTE
                 return
             }
             
+            /*
+            Kullanıcı e postasını User Defaults'a(Kullanıcı Varsayılanları ÖnBelleğine) şimdi kaydetmemizin nedeni şu : Firebase Storage'ın görseller için STANDARTLAŞTIRILMIŞ bir formata sahiptir FirebaseStorage kısmına bakarsın ne demek istediğimizi daha iyi anlarsın.
+             Bu FirebaseStorage'da STANDARTLAŞTIRILMIŞ FORMAT SAYESİNDE BİZDE KULLANICININ GÖRSELİNİ SORGULAMAK İÇİN MAİL'İ KULLANICAZ ve kullanıcıları ve haliyle GÖRSELLERİNİ PROFİL SEKMESİNDE GÖSTERİCEZ !!! */     // ÇOK ÖNEMLİ SAKIN SİLME
+             
+            UserDefaults.standard.setValue(email, forKey: "email")
             
             DatabaseManager2.shared.userExist(with: email,completion:
                                                 {

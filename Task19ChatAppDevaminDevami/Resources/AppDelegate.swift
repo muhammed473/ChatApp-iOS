@@ -65,7 +65,7 @@ import FirebaseAuth
                    return false
                } */ // Firebase Youtube kanalındaki kişinin yazdığı kodlar
             
-           guard let clientID = FirebaseApp.app()?.options.clientID else { return false }
+            guard let clientID = FirebaseApp.app()?.options.clientID else { return false }
             let config = GIDConfiguration(clientID: clientID)
             GIDSignIn.sharedInstance.configuration = config
            
@@ -81,7 +81,6 @@ import FirebaseAuth
                     print("Google oturumun AÇIK")
                 }
             }
-            
             
             return true
         }
