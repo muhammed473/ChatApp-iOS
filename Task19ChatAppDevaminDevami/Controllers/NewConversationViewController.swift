@@ -10,6 +10,9 @@ import JGProgressHUD
 
 class NewConversationsViewController: UIViewController  {
 
+    
+    public var completion : (([String:String]) -> (Void))? // Bu completion DEĞİŞKENİN TİPİ BİR FONKSİYONDUR(CLOSURE).
+ 
     private let spinner  = JGProgressHUD(style: .dark)
     
     private var users  = [[String:String]]() // SÖZLÜK DİZİSİ
@@ -196,8 +199,15 @@ extension NewConversationsViewController: UITableViewDelegate,UITableViewDataSou
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         myTableView.deselectRow(at: indexPath, animated: true)
-        // İşte BUNDAN SONRA KONUŞMA BAŞLATICAZ......
+        let targetUserData = self.results[indexPath.row]
         
-    }
+        dismiss(animated: true, completion: {
+            [weak self] in
+            self?.completion?(targetUserData)
+        })
+        
+      
+        
+    } // KİŞİLER KONUŞMA BAŞLATICAK
     
 }

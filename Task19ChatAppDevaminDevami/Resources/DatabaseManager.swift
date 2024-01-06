@@ -68,7 +68,7 @@ extension DatabaseManager2 {
         {
           (snapshot) in
             
-            guard let foundEmail = snapshot.value as? String else { // Hoca şunu yazdı : guard snapshot.value as? String != nil else [ İkiside aynı işleve sahiptir ! ! ! ]
+            guard  snapshot.value as? String != nil else {
                 completion(false)
                 return
             }
@@ -99,29 +99,7 @@ extension DatabaseManager2 {
                 return
             }
             
-            /*
-             
-             USERS KLASÖRÜNE TIKLADIĞINDA KARŞINA ÇIKACAK OLAN KOLEKSİYONLARIN BİÇİMİ
-             
-             [
-                   [
-             
-                     "name" :
-                     "safe_email " :
-             
-                   ],
-             
-                   [
-             
-                     "name" :
-                     "safe_email " :
-             
-                   ],
-             
-             ]
-             
-             */ // DATABASE'DEKİ  KLASÖR İÇİNDEKİ KOLEKSİYONUN GÖRÜNME ŞEKLİ
-            
+          
             
             /* Başlangıçta kullanıcı(users) klasörü oluşturulduktan sonra  KLASÖRÜMÜZÜN içinde Eğer HİÇBİR ŞEY KOLEKSİYON(SÖZLÜK,DİZİ) YOKSA KOLEKSİYON OLUŞTURUP
             kullanıcı koleksiyonumuzu(sözlüğümüzü,dizimize) eklicez */ // ŞİMDİ YAPACAĞIMIZ İŞLEMİN AÇIKLAMASI
@@ -208,6 +186,254 @@ extension DatabaseManager2 {
     
 }
 
+
+// MY MARK : MESAJ GÖNDERME İŞLEMİ VE KONUŞMALAR
+
+extension DatabaseManager2{
+    
+    /*
+     
+     YAPACAĞIMIZ ANA MANTIK OLARAK 2 İŞLEM VARDIR.BUNLAR :
+     
+       1) Bir sohbeti kullanıcıların konuşma (conversation) koleksiyonuna koymak.
+       2) Sonra 2 kez yeni girişi oluşturduğumuzda içindeki tüm mesajlarla bir rota sohbeti oluşturmak.
+
+ 1)  conversation =>
+      [
+           [
+     
+             "conversation_id veya sadece id" : "abcdef"
+             "other_user_email " :
+             "latest_messages(Son mesajlar)"  : =>
+              [
+                 "date" : Date(),
+                 "latest_message" : "Son mesaj..",
+                 "is_read" : true/false
+              ]
+     
+           ],
+     
+      ]
+     
+ 2)  "abcdef"
+     {
+     
+        " messages " :
+         [
+           "id" : String,
+           "type" : text,photo,video,
+           "content" : String,
+           "date" : Date(),
+           "sender_email" : String,
+           "isRead" : true/false"
+     
+         ]
+     
+     }
+     
+     */ // ÇOK ÖNEMLİ : DATABASE'DE KURACAĞIMIZ İŞLEM MANTIĞININ(ŞEMASI) AÇIKLANMASI
+    
+    /// Konuşmak istediğimiz diğer kullanıcının epostası ve gönderilen ilk mesajla yeni bir görüşme(konuşma) oluşturmanın bu metotta yapılması
+    public func createNewConversation(with otherUserEmail :String,firstMessage : Message,completion : @escaping(Bool) ->Void) {
+        
+        // İlk başta  önbellekte   epostam var mı bundan emin olmam lazım.
+        guard let currentEmail = UserDefaults.standard.value(forKey: "email") as? String else {
+            return
+        }
+        let safeEmail = DatabaseManager2.safeEmail(emailAddress: currentEmail)
+        let ref = database.child("\(safeEmail)")
+       
+        ref.observeSingleEvent(of: .value, with:
+        {
+            (snapshot) in
+            
+            guard var userNode = snapshot.value as? [String:Any] else {
+                completion(false)
+                print("Kullanıcı bulunamadı.(user not found)")
+                return
+            }
+            
+            let messageDate = firstMessage.sentDate
+            let dateString = ChatViewController.dateFormatter.string(from: messageDate)
+            
+            var message = ""
+            
+            switch firstMessage.kind{
+                
+            case .text(let messageText):
+                message = messageText
+                
+                
+            case .attributedText(_):
+                break
+            case .photo(_):
+                break
+            case .video(_):
+                break
+            case .location(_):
+                break
+            case .emoji(_):
+                break
+            case .audio(_):
+                break
+            case .contact(_):
+                break
+            case .linkPreview(_):
+                break
+            case .custom(_):
+                break
+            }
+            
+            let conversationId = "conversation_\(firstMessage.messageId)"
+            
+            let newConversationData : [String:Any] =
+              [
+                "id" : conversationId,
+                "other_user_email" : otherUserEmail,
+                "latest_message" :
+                    [
+                        "date" : dateString,
+                        "message" : message,
+                        "is_read" : false // Varsayılan olarak ilk mesaj okunmaz o yüzden false'dur.
+                    ]
+              ]
+            
+            if var conversations = userNode["conversations"] as? [[String:Any]]  {
+                
+                // Şuan  konuşma dizisi(Conversation) mevcut.Ekleyebilirsin..
+                conversations.append(newConversationData)
+                userNode["conversations"] = conversations
+                
+                ref.setValue(userNode, withCompletionBlock:
+                {
+                  [weak self] (error, _ ) in
+                    guard error == nil else {
+                        completion(false)
+                        return
+                    }
+                    self?.finishCreatingConversation(conversationID: conversationId, firstMessage: firstMessage, completion: completion)
+                })
+                
+            }// En üstteki ŞEMA'mıza göre yapmaya başladık..
+            
+            else{ //  // Konuşma dizisi(Conversation) dizisi(düğümü) mevcut değil.OLUŞTUR..
+                
+                userNode["conversations"] =
+                [
+                  newConversationData
+                ]
+             
+                ref.setValue(userNode, withCompletionBlock:
+                {
+                  [weak self] (error, _ ) in
+                    guard error == nil else {
+                        completion(false)
+                        return
+                    }
+                    self?.finishCreatingConversation(conversationID: conversationId, firstMessage: firstMessage, completion: completion)
+                   
+                })
+                
+            }
+            
+        })
+    }
+    
+    
+    private func finishCreatingConversation(conversationID:String,firstMessage:Message,completion :@escaping (Bool) -> Void ) {
+    
+       
+        let messageDate = firstMessage.sentDate
+        let dateString = ChatViewController.dateFormatter.string(from: messageDate)
+        var message = ""
+        
+        switch firstMessage.kind{
+            
+           case .text(let messageText):
+             message = messageText
+            
+           case .attributedText(_):
+            break
+           case .photo(_):
+            break
+           case .video(_):
+            break
+           case .location(_):
+            break
+           case .emoji(_):
+            break
+           case .audio(_):
+            break
+           case .contact(_):
+            break
+           case .linkPreview(_):
+            break
+           case .custom(_):
+            break
+        }
+        
+        guard var myEmail = UserDefaults.standard.value(forKey: "email") as? String else {
+            completion(false)
+            return
+        }
+        
+        let currentUserEmail = DatabaseManager2.safeEmail(emailAddress: myEmail)
+        
+        let collectionMessage : [String:Any] = [
+        
+            "id" : firstMessage.messageId,
+            "type" : firstMessage.kind.messageKindString,
+            "content" : message,
+            "date" : dateString,
+            "sender_email" : currentUserEmail,
+            "is_read" : false
+        ]
+         
+        
+        let value : [String : Any] = [
+
+           "messages" :
+            [
+             collectionMessage
+            ]
+            
+        ]
+        
+        print("Görüşme eklendi.Bu da görüşmenin kimliği : \(conversationID)")
+        
+        database.child("\(conversationID)").setValue(value,withCompletionBlock: {
+            
+            (error , _ ) in
+            
+            guard error == nil else {
+                completion(false)
+                return
+            }
+             completion(true)
+        })
+        
+ 
+    } // Görüşme oluşturmayı bitir.
+    
+    
+    /// Kullanıcının epostayla ilettiği tüm konuşmaları getirir ve döndürür.
+    public func getAllConversations(for email: String,completion : @escaping(Result<String,Error>) -> Void) {
+        
+        
+        
+    }
+    
+    /// Belirli bir konuşmaya  ilişkin tüm mesajları döndürür.
+    public func getAllMessagesForConversation(with id:String,completion : @escaping (Result<String,Error>) ->Void ) {
+        
+    }
+    
+    /// Bu fonksiyonda hedef konuşmayı belirleyip ve buna   Mesaj göndericez.
+    public func sendMessage(to conversation: String,message:Message,completion : (Bool) -> Void){
+        
+    }
+    
+}
 
 
 

@@ -55,14 +55,37 @@ class ConversationsViewController: UIViewController {  // Konuşmalar(Görüşme
         fetchConversations()
     }
     
+    
     @objc private func didTapComposeButton() { // ->
         
         let vc = NewConversationsViewController()
+        vc.completion = {
+            
+             [weak self]  (result) in
+            
+          print("\(result)") // Seçilen kişinin bilgileri
+            self?.createNewConversation(result: result)
+            
+        }
         let navVC = UINavigationController(rootViewController: vc)
         present(navVC,animated: true)
         
     } // -> NewConversationsViewController
     
+    
+    private func createNewConversation(result : [String:String]) {
+        
+        guard let name = result["name"], let email = result["email"] else {
+            return
+        }
+        
+        let vc = ChatViewController(with: email) // Hangi kullanıcıyla sohbet ettiğimiz email 'le anladık...
+        vc.isNewConversation = true
+        vc.title = "Fatih Koç" // Sohbet ettiğimiz kişinin başlığını şimdilik RASTGELE FATİH KOÇ  olarak belirledik. Sanki Fatih koç isimli kişiyle sohbet ediyormuşuz gibi düşün.
+        vc.navigationItem.largeTitleDisplayMode = .never
+        navigationController?.pushViewController(vc, animated: true)
+        
+    }
     
     // viewDidLayoutSubviews = Görünüm denetleyicisine, görünümün alt görünümlerini EKLEDİKTEN HEMEN SONRA çalışır.
     override func viewDidLayoutSubviews() {
@@ -129,8 +152,8 @@ extension ConversationsViewController : UITableViewDelegate,UITableViewDataSourc
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true) // Tablo hücresini seçtiğimizde seçili durumdan çıkarmak ve kullanıcının etkileşime devam etmesine olanak tanımak için kullanılır.
         
-        let vc = ChatViewController()
-        vc.title = "Fatih Koç" // Sohbet ettiğimiz kişinin başlığını şimdilik RASTGELE FATİH KOÇ  olarak belirledik. Sanki Fatih koç isimli kişiyle oshbet ediyormuşuz gibi düşün.
+        let vc = ChatViewController(with: "sdlisaif@gmail.com")
+        vc.title = "Fatih Koç" // Sohbet ettiğimiz kişinin başlığını şimdilik RASTGELE FATİH KOÇ  olarak belirledik. Sanki Fatih koç isimli kişiyle sohbet ediyormuşuz gibi düşün.
         vc.navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(vc, animated: true)
     }
