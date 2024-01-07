@@ -14,7 +14,7 @@ final class StorageManager {
     
     private let storage = Storage.storage().reference()
     
-    // Şimdi şunları yapıcaz : Verilere(Data'lara BAYT alabilen bir İŞLEV EKLİCEZ ve yazılması gereken yere bir DOSYA ADI EKLİCEZ :
+    // Şimdi şunları yapıcaz : Verilere(Data'lara) BAYT alabilen bir İŞLEV EKLİCEZ ve yazılması gereken yere bir DOSYA ADI EKLİCEZ :
     
     /*
      

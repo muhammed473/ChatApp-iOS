@@ -78,6 +78,7 @@ class ChatViewController: MessagesViewController { // MessagesViewController SCR
     }()
     
     public let otherUserEmail : String
+    private let conversationId : String? // Listemizdeki bir konuşmaya tıkladığımızda bunun bir kimliği vardır.
     public var isNewConversation = false // Yeni bir konuşma olup olmadığını belirlememiz için oluşturduk.
    
   
@@ -89,14 +90,20 @@ class ChatViewController: MessagesViewController { // MessagesViewController SCR
             return nil // Bir eposta önbelleğimizde ve kullanıcı varsayılanlarında mevcut değilse göndereni DÖNDÜRMEYECEĞİZ.
         }
         
+        let safeEmail =  DatabaseManager2.safeEmail(emailAddress: email)
+        
       return  Sender(photoURL: "",
-               senderId: email,
-               displayName: "Mika Dursun")
+               senderId: safeEmail,
+               displayName: "Ben")
+        
     }
     
-     init(with email : String) {
+   
+    init(with email : String, id:String?) {
+        self.conversationId = id
         self.otherUserEmail = email
         super.init(nibName: nil, bundle: nil)
+        
     }
     
     required init?(coder: NSCoder) {
@@ -107,8 +114,6 @@ class ChatViewController: MessagesViewController { // MessagesViewController SCR
     override func viewDidLoad() {
         super.viewDidLoad()
 
-      
-        
         view.backgroundColor = .red
         
        // messagesCollectionView : Mesaj toplama görünümüni bize sağlar.
@@ -117,13 +122,60 @@ class ChatViewController: MessagesViewController { // MessagesViewController SCR
         messagesCollectionView.messagesLayoutDelegate = self  // Mesaj düzen temsilcisi
         messagesCollectionView.messagesDisplayDelegate = self // Mesaj görüntüleme temsilcisi
         messageInputBar.delegate = self
-      
+        
+   
     }
+    
+    private func listenForMessages(id:String,shoulScrollToBottom:Bool) {
+        
+        DatabaseManager2.shared.getAllMessagesForConversation(with: id, completion:{
+            
+          [weak self]  (result) in
+            
+            switch result {
+                
+            case  .success(let messages) :
+                print("Başarılı bir şekilde mesaj alındı.")
+                guard !messages.isEmpty else {
+                    return
+                }
+                
+                self?.messages = messages
+                
+                DispatchQueue.main.async {
+                    
+                    //  messagesCollectionView.reloadDataAndKeepOffset() = Kullanıcı ESKİ MESAJLARI OKURKEN
+                    //  yeni bir mesaj geldiğinde AŞAĞI DOĞRU OTOMATİK OLARAK KAYILMASINI ENGELLER !!!
+                    self?.messagesCollectionView.reloadDataAndKeepOffset()
+                    
+                    if shoulScrollToBottom {
+                        self?.messagesCollectionView.scrollToBottom()
+                    }
+                    else{
+                     
+                       
+                    }
+                    
+                    
+                }
+                                
+            case  .failure(let error) :
+                print("Mesaj almada başarısız olduk.\(error)")
+                
+            }
+            
+        })
+                                                                
+    }
+    
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
         messageInputBar.inputTextView.becomeFirstResponder() 
+        if let conversationId = conversationId {
+            listenForMessages(id: conversationId,shoulScrollToBottom : true)
+        }
     }
     
 }
@@ -137,7 +189,7 @@ extension ChatViewController: MessagesDataSource,MessagesLayoutDelegate,Messages
             return sender
         }
         fatalError("Self sender(Gönderen) boş.Eposta ön belleğe alınmalıdır.")
-        return Sender(photoURL: "", senderId: "123", displayName: "")
+      
     }
     
     func messageForItem(at indexPath: IndexPath, in messagesCollectionView: MessageKit.MessagesCollectionView) -> MessageKit.MessageType {
@@ -169,7 +221,7 @@ extension ChatViewController:InputBarAccessoryViewDelegate {
         if self.isNewConversation {
             
             let message  = Message(sender:selfSender , messageId: messageId, sentDate: Date(), kind: MessageKind.text(text))
-            DatabaseManager2.shared.createNewConversation(with: self.otherUserEmail, firstMessage: message, completion:
+            DatabaseManager2.shared.createNewConversation(with: self.otherUserEmail,name: self.title ?? "User", firstMessage: message, completion:
             {
               (success) in
                 
@@ -204,7 +256,7 @@ extension ChatViewController:InputBarAccessoryViewDelegate {
         print("Oluşturulan MESAJ KİMLİĞİ : \(newIdentifier)")
         
         return newIdentifier
-    } //  Mesaj kimliğinin  ve date,otherUserEmail,senderEmail,randomInt oluşturulması
+    } //  Mesaj kimliğinin  ve date,otherUserEmail,senderEmail oluşturulması
     
     
 }

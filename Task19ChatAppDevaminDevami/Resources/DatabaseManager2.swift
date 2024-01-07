@@ -234,7 +234,7 @@ extension DatabaseManager2{
      */ // ÇOK ÖNEMLİ : DATABASE'DE KURACAĞIMIZ İŞLEM MANTIĞININ(ŞEMASI) AÇIKLANMASI
     
     /// Konuşmak istediğimiz diğer kullanıcının epostası ve gönderilen ilk mesajla yeni bir görüşme(konuşma) oluşturmanın bu metotta yapılması
-    public func createNewConversation(with otherUserEmail :String,firstMessage : Message,completion : @escaping(Bool) ->Void) {
+    public func createNewConversation(with otherUserEmail :String,name:String, firstMessage : Message,completion : @escaping(Bool) ->Void) {
         
         // İlk başta  önbellekte   epostam var mı bundan emin olmam lazım.
         guard let currentEmail = UserDefaults.standard.value(forKey: "email") as? String else {
@@ -245,7 +245,7 @@ extension DatabaseManager2{
        
         ref.observeSingleEvent(of: .value, with:
         {
-            (snapshot) in
+          [weak self]  (snapshot) in
             
             guard var userNode = snapshot.value as? [String:Any] else {
                 completion(false)
@@ -290,6 +290,7 @@ extension DatabaseManager2{
               [
                 "id" : conversationId,
                 "other_user_email" : otherUserEmail,
+                "name" : name,
                 "latest_message" :
                     [
                         "date" : dateString,
@@ -298,6 +299,39 @@ extension DatabaseManager2{
                     ]
               ]
             
+            let recipient_ConversationData : [String:Any] = // Alıcı
+              [
+                "id" : conversationId,
+                "other_user_email" : safeEmail,
+                "name" : "Self Yani Kendisi",
+                "latest_message" :
+                    [
+                        "date" : dateString,
+                        "message" : message,
+                        "is_read" : false // Varsayılan olarak ilk mesaj okunmaz o yüzden false'dur.
+                    ]
+              ]
+            
+            // Aşağıdaki kodlar ALICI KULLANICININ görüşmesini günceller(ayarlar).
+            
+            self?.database.child("\(otherUserEmail)/conversations").observeSingleEvent(of: .value, with:
+            {
+                
+               [weak self]  (snapshot) in
+                
+                if var conversations = snapshot.value as? [[String:Any]] {
+                    // Append
+                    conversations.append(recipient_ConversationData)
+                    self?.database.child("\(otherUserEmail)/conversations").setValue(conversationId)
+                }
+                else {
+                    // Create
+                    self?.database.child("\(otherUserEmail)/conversations").setValue([recipient_ConversationData])
+                }
+                
+            })
+            
+            // Aşağıdaki kodlar KONUŞAN KULLANICINI görüşmesini günceller.
             if var conversations = userNode["conversations"] as? [[String:Any]]  {
                 
                 // Şuan  konuşma dizisi(Conversation) mevcut.Ekleyebilirsin..
@@ -311,7 +345,7 @@ extension DatabaseManager2{
                         completion(false)
                         return
                     }
-                    self?.finishCreatingConversation(conversationID: conversationId, firstMessage: firstMessage, completion: completion)
+                    self?.finishCreatingConversation( name: name, conversationID: conversationId, firstMessage: firstMessage, completion: completion)
                 })
                 
             }// En üstteki ŞEMA'mıza göre yapmaya başladık..
@@ -330,7 +364,7 @@ extension DatabaseManager2{
                         completion(false)
                         return
                     }
-                    self?.finishCreatingConversation(conversationID: conversationId, firstMessage: firstMessage, completion: completion)
+                    self?.finishCreatingConversation( name: name, conversationID: conversationId, firstMessage: firstMessage, completion: completion)
                    
                 })
                 
@@ -340,7 +374,7 @@ extension DatabaseManager2{
     }
     
     
-    private func finishCreatingConversation(conversationID:String,firstMessage:Message,completion :@escaping (Bool) -> Void ) {
+    private func finishCreatingConversation(name:String,conversationID:String,firstMessage:Message,completion :@escaping (Bool) -> Void ) {
     
        
         let messageDate = firstMessage.sentDate
@@ -386,7 +420,8 @@ extension DatabaseManager2{
             "content" : message,
             "date" : dateString,
             "sender_email" : currentUserEmail,
-            "is_read" : false
+            "is_read" : false,
+            "name" : name
         ]
          
         
@@ -417,14 +452,96 @@ extension DatabaseManager2{
     
     
     /// Kullanıcının epostayla ilettiği tüm konuşmaları getirir ve döndürür.
-    public func getAllConversations(for email: String,completion : @escaping(Result<String,Error>) -> Void) {
-        
-        
+    public func getAllConversations(for email: String,completion : @escaping(Result<[Conversation],Error>) -> Void) {
+    
+        // database.child("\(email)/conversations") => Uygulamayı kullanan kişinin maili => conversations Düğümü
+        database.child("\(email)/conversations").observe(.value, with:{
+           
+            (snapshot) in
+            
+            guard let value = snapshot.value as? [[String:Any]] else {
+                completion(.failure(DatabaseErrors.failedToFetch))
+                return
+            }
+            
+            /*
+              - compactMap() metodu  bir dizi veya koleksiyon üzerinde işlem yapmak için kullanılan bir fonksiyondur.
+              - İşlevin dönüş değeri optional bir tür olduğunda kullanışlıdır.
+              - Bu metot her eleman için bir kapatma işlevini çağırır ve işlevin NİL OLMAYAN DEĞERLERİNİ BİR DİZİYE
+                EKLER.
+              - Bu metodun amacı dizi üzerindeki nil değerlerle başa çıkmak yani optionalleri temizlemek içindir.
+             */ // .compactMap() metodunun açıklanması(ÇOK ÖNEMLİ)
+            
+            let conversations : [Conversation] = value.compactMap ({
+                
+                 (dictionary) in
+                
+                guard let conversationId = dictionary["id"] as? String,
+                      let name = dictionary["name"] as? String,
+                      let otherUserEmail = dictionary["other_user_email"] as? String,
+                      let latest_Message = dictionary["latest_message"] as? [String:Any],
+                      let isRead = latest_Message["is_read"] as? Bool,
+                      let date = latest_Message["date"] as? String,
+                      let message = latest_Message["message"] as? String
+                else {
+                 return nil
+                }
+                
+                let latestMessageObject = LatestMessage(date: date, text: message, isRead: isRead)
+                return Conversation(id: conversationId,
+                                    name: name,
+                                    otherUserEmail: otherUserEmail,
+                                    latestMessage: latestMessageObject)
+            
+            })
+            
+            completion(.success(conversations))
+            
+        })
+    
         
     }
     
     /// Belirli bir konuşmaya  ilişkin tüm mesajları döndürür.
-    public func getAllMessagesForConversation(with id:String,completion : @escaping (Result<String,Error>) ->Void ) {
+    public func getAllMessagesForConversation(with id:String,completion : @escaping (Result<[Message],Error>) ->Void ) {
+        
+        // database.child("\(email)/conversations") => Uygulamayı kullanan kişinin maili => conversations Düğümü
+        database.child("\(id)/messages").observe(.value, with:{
+           
+            (snapshot) in
+            
+            guard let value = snapshot.value as? [[String:Any]] else {
+                completion(.failure(DatabaseErrors.failedToFetch))
+                return
+            }
+            
+         
+            let messages : [Message] = value.compactMap ({
+                
+                 (dictionary) in
+                
+                guard let name = dictionary["name"] as? String,
+                      let isRead = dictionary["is_read"] as? Bool,
+                      let messageID = dictionary["id"] as? String,
+                      let content = dictionary["content"] as? String,
+                      let senderEmail = dictionary["sender_email"] as? String,
+                      let type = dictionary["type"] as? String,
+                      let dateString = dictionary["date"] as? String,
+                      let date = ChatViewController.dateFormatter.date(from: dateString)
+                else {
+                    return nil
+                }
+               
+                let sender = Sender(photoURL: "", senderId: senderEmail, displayName: name)
+                
+                return Message(sender: sender, messageId: messageID, sentDate: date, kind: .text(content))
+              
+            })
+            
+            completion(.success(messages))
+            
+        })
+        
         
     }
     
