@@ -51,6 +51,29 @@ struct ChatAppUser2 {
 }
 
 
+extension DatabaseManager2 {
+    
+    
+    public func getDataFor(path:String,completion: @escaping (Result<Any,Error>) -> Void  ) {
+        
+        self.database.child("\(path)").observeSingleEvent(of: .value)
+        {
+            (snapshot) in
+            
+            guard let value = snapshot.value else {
+                completion(.failure(DatabaseErrors.failedToFetch))
+                return
+            }
+            
+            completion(.success(value))
+        }
+        
+        
+    } // LoginViewController => LoginButtonTapped()
+    
+}
+
+
 // MY MARK : HESAP YÖNETİMİ
 
 extension DatabaseManager2 {
@@ -187,6 +210,7 @@ extension DatabaseManager2 {
 }
 
 
+
 // MY MARK : MESAJ GÖNDERME İŞLEMİ VE KONUŞMALAR
 
 extension DatabaseManager2{
@@ -237,7 +261,9 @@ extension DatabaseManager2{
     public func createNewConversation(with otherUserEmail :String,name:String, firstMessage : Message,completion : @escaping(Bool) ->Void) {
         
         // İlk başta  önbellekte   epostam var mı bundan emin olmam lazım.
-        guard let currentEmail = UserDefaults.standard.value(forKey: "email") as? String else {
+        guard let currentEmail = UserDefaults.standard.value(forKey: "email") as? String,
+              let currentName = UserDefaults.standard.value(forKey: "name") as? String // -> LoginViewController'dan alındı.
+        else {
             return
         }
         let safeEmail = DatabaseManager2.safeEmail(emailAddress: currentEmail)
@@ -303,7 +329,7 @@ extension DatabaseManager2{
               [
                 "id" : conversationId,
                 "other_user_email" : safeEmail,
-                "name" : "Self Yani Kendisi",
+                "name" : currentName,
                 "latest_message" :
                     [
                         "date" : dateString,
@@ -546,12 +572,205 @@ extension DatabaseManager2{
     }
     
     /// Bu fonksiyonda hedef konuşmayı belirleyip ve buna   Mesaj göndericez.
-    public func sendMessage(to conversation: String,message:Message,completion : (Bool) -> Void){
+    public func sendMessage(to conversation: String,otherUserEmail:String,name:String,newMessage:Message,completion : @escaping (Bool) -> Void){
+        
+        /* 1 ) İki kişinin VAR OLAN KONUŞMALARINA yani  bu fonksiyon daha önceden en az 1 mesaj atılmış olan konuşmaya       YENİ MESAJ EKLEMEYİ SAĞLAR.
+           2 ) Aynı zamanda bu fonksiyonda GÖNDERENİN SON MESAJINI  GÜNCELLİCEZ.
+           3 ) Alıcının SON MESAJINI GÜNCELLİCEZ. */ // Bu fonksiyonda yapacağımız işlemler
+        
+        guard let myEmail = UserDefaults.standard.value(forKey: "email") as? String else {
+            completion(false)
+            return
+        }
+        
+        let currentEmail = DatabaseManager2.safeEmail(emailAddress: myEmail)
+        
+        database.child("\(conversation)/messages").observeSingleEvent(of: .value, with:
+        {
+            
+           [weak self] (snapshot) in
+            
+            guard let strongSelf = self else {
+                return
+            }
+            
+            guard var currentMessages = snapshot.value as? [[String:Any]] else {
+                completion(false)
+                return
+            }
+            
+            let messageDate = newMessage.sentDate
+            let dateString = ChatViewController.dateFormatter.string(from: messageDate)
+            var message = ""
+            
+            switch newMessage.kind{
+                
+               case .text(let messageText):
+                 message = messageText
+                
+               case .attributedText(_):
+                break
+               case .photo(_):
+                break
+               case .video(_):
+                break
+               case .location(_):
+                break
+               case .emoji(_):
+                break
+               case .audio(_):
+                break
+               case .contact(_):
+                break
+               case .linkPreview(_):
+                break
+               case .custom(_):
+                break
+            }
+            
+            guard var myEmail = UserDefaults.standard.value(forKey: "email") as? String else {
+                completion(false)
+                return
+            }
+            
+            let currentUserEmail = DatabaseManager2.safeEmail(emailAddress: myEmail)
+            
+            let newMessageEntry : [String:Any] = [
+            
+                "id" : newMessage.messageId,
+                "type" : newMessage.kind.messageKindString,
+                "content" : message,
+                "date" : dateString,
+                "sender_email" : currentUserEmail,
+                "is_read" : false,
+                "name" : name
+            ]
+            
+            currentMessages.append(newMessageEntry)
+            
+            strongSelf.database.child("\(conversation)/messages").setValue(currentMessages) {
+                
+                (error, _ )  in
+                
+                guard error == nil else {
+                    completion(false)
+                    return
+                }
+                
+                /// Gönderen kullanıcının  EN SON MESAJI GÜNCELLENİR.
+                
+                 // DATABASE ''DE  İLGİLİ KAYIT OLAN KİŞİNİN MAİLİNİN ALTINDA Conversation Alanına mesajların kaydedilmesi yaptık.
+                strongSelf.database.child("\(currentEmail)/conversations").observeSingleEvent(of: .value,with: {
+                   
+                    (snapshot) in
+                    
+                    guard var currentUserConversations = snapshot.value as? [[String:Any]] else {
+                        completion(false)
+                        return
+                    }
+                    
+                    let updateValue : [String : Any] =
+                    [
+                        "date" : dateString,
+                        "is_read" : false,
+                        "message" : message
+                    ]
+                    
+                    var targetConversation : [String : Any]?
+                    var position = 0
+                    
+                    for  conversationDictionary in currentUserConversations {
+                        
+                        if let currentId = conversationDictionary["id"] as? String,currentId == conversation {
+                            targetConversation = conversationDictionary
+                            break
+                        }
+                        position += 1
+                    }
+                    
+                    targetConversation?["latest_message"] = updateValue
+                    guard let finalConversation = targetConversation else {
+                        completion(false)
+                        return
+                    }
+            
+                    currentUserConversations[position] = finalConversation
+                    strongSelf.database.child("\(currentEmail)/conversations").setValue(currentUserConversations,withCompletionBlock: {
+                        
+                          ( error, _ ) in
+                        
+                        guard error == nil else {
+                            completion(false)
+                            return
+                        }
+                        
+                        /// Alıcı kullanıcı için EN SON MESAJ GÜNCELLENİR.
+                        
+                        //  İLGİLİ KAYIT OLAN KİŞİNİN MAİLİNİN ALTINDA Conversation Alanına mesajların kaydedilmesi yaptık.
+                        strongSelf.database.child("\(otherUserEmail)/conversations").observeSingleEvent(of: .value,with: {
+                           
+                            (snapshot) in
+                            
+                            guard var otherUserConversations = snapshot.value as? [[String:Any]] else {
+                                completion(false)
+                                return
+                            }
+                            
+                            let updateValue : [String : Any] =
+                            [
+                                "date" : dateString,
+                                "is_read" : false,
+                                "message" : message
+                            ]
+                            
+                            var targetConversation : [String : Any]?
+                            var position = 0
+                            
+                            for  conversationDictionary in otherUserConversations {
+                                
+                                if let currentId = conversationDictionary["id"] as? String,currentId == conversation {
+                                    targetConversation = conversationDictionary
+                                    break
+                                }
+                                position += 1
+                            }
+                            
+                            targetConversation?["latest_message"] = updateValue
+                            guard let finalConversation = targetConversation else {
+                                completion(false)
+                                return
+                            }
+                    
+                             otherUserConversations[position] = finalConversation
+                            strongSelf.database.child("\(otherUserEmail)/conversations").setValue(otherUserConversations,withCompletionBlock: {
+                                
+                                  ( error, _ ) in
+                                
+                                guard error == nil else {
+                                    completion(false)
+                                    return
+                                }
+                                
+                                /// Alıcı kullanıcı için EN SON MESAJ GÜNCELLENİR.
+                                
+                                completion(true)
+                            })
+                            
+                        })
+                        
+                    })
+                    
+                })
+                
+               
+            }
+            
+            
+        })
+        
         
     }
-    
+
 }
-
-
 
 

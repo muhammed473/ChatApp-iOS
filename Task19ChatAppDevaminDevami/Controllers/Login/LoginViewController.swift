@@ -247,12 +247,37 @@ class LoginViewController: UIViewController{
             
             guard let result = authResult, error == nil else{
                 self?.alertUserLoginError()
-                print("Böyle bir kullanıcı YOK LÜTFEN bu uygulamaya İLK ÖNCE KAYDOLUN.")
+                print("Kullanıcı  EPOSTAYLA GİRİŞ TERCİHİYLE OTURUM AÇAMADI : \(myEmail)")
                 return
             }
             
         
             let user = result.user
+            
+            
+            let safeEmail = DatabaseManager2.safeEmail(emailAddress: myEmail)
+            DatabaseManager2.shared.getDataFor(path: safeEmail, completion: 
+            {
+               (result) in
+                
+                switch result {
+                    
+                   case .success(let data) :
+                    
+                      guard let userData = data  as? [String:Any],
+                            let firstName = userData["first_name"] as? String,
+                            let lastName = userData["last_name"] as? String
+                    else {
+                        return
+                    }
+                    
+                    UserDefaults.standard.set("\(firstName) \(lastName)", forKey: "name")
+                    
+                  case .failure(let error) :
+                    print("Veri okunamadığından dolayı hata var : \(error)")
+                  }
+                
+            })
             
             /*
             Kullanıcı e postasını User Defaults'a(Kullanıcı Varsayılanları ÖnBelleğine) şimdi kaydetmemizin nedeni şu : Firebase Storage'ın görseller için STANDARTLAŞTIRILMIŞ bir formata sahiptir FirebaseStorage kısmına bakarsın ne demek istediğimizi daha iyi anlarsın.
@@ -324,8 +349,9 @@ class LoginViewController: UIViewController{
             Kullanıcı e postasını User Defaults'a(Kullanıcı Varsayılanları ÖnBelleğine) şimdi kaydetmemizin nedeni şu : Firebase Storage'ın görseller için STANDARTLAŞTIRILMIŞ bir formata sahiptir FirebaseStorage kısmına bakarsın ne demek istediğimizi daha iyi anlarsın.
              Bu FirebaseStorage'da STANDARTLAŞTIRILMIŞ FORMAT SAYESİNDE BİZDE KULLANICININ GÖRSELİNİ SORGULAMAK İÇİN MAİL'İ KULLANICAZ ve kullanıcıları ve haliyle GÖRSELLERİNİ PROFİL SEKMESİNDE GÖSTERİCEZ !!! */     // ÇOK ÖNEMLİ SAKIN SİLME
              
-            UserDefaults.standard.setValue(email, forKey: "email")
-                   
+            UserDefaults.standard.set(email, forKey: "email")
+            UserDefaults.standard.set("\(firstName) \(lastName)", forKey: "name")
+            
             DatabaseManager2.shared.userExist(with: email,completion:  {
                 
                 (exists) in
@@ -495,7 +521,8 @@ extension LoginViewController: LoginButtonDelegate{  // Facebook ile giriş ENTE
             Kullanıcı e postasını User Defaults'a(Kullanıcı Varsayılanları ÖnBelleğine) şimdi kaydetmemizin nedeni şu : Firebase Storage'ın görseller için STANDARTLAŞTIRILMIŞ bir formata sahiptir FirebaseStorage kısmına bakarsın ne demek istediğimizi daha iyi anlarsın.
              Bu FirebaseStorage'da STANDARTLAŞTIRILMIŞ FORMAT SAYESİNDE BİZDE KULLANICININ GÖRSELİNİ SORGULAMAK İÇİN MAİL'İ KULLANICAZ ve kullanıcıları ve haliyle GÖRSELLERİNİ PROFİL SEKMESİNDE GÖSTERİCEZ !!! */     // ÇOK ÖNEMLİ SAKIN SİLME
              
-            UserDefaults.standard.setValue(email, forKey: "email")
+            UserDefaults.standard.set(email, forKey: "email")
+            UserDefaults.standard.set("\(firstName) \(lastName)", forKey: "name")
             
             DatabaseManager2.shared.userExist(with: email,completion:
                                                 {

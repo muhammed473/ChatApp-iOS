@@ -218,26 +218,44 @@ extension ChatViewController:InputBarAccessoryViewDelegate {
         
         // Mesaj gönder.
         
+        let message  = Message(sender:selfSender , messageId: messageId, sentDate: Date(), kind: MessageKind.text(text))
+        
         if self.isNewConversation {
             
-            let message  = Message(sender:selfSender , messageId: messageId, sentDate: Date(), kind: MessageKind.text(text))
             DatabaseManager2.shared.createNewConversation(with: self.otherUserEmail,name: self.title ?? "User", firstMessage: message, completion:
             {
-              (success) in
+              [weak self] (success) in
                 
                 if success {
                     print("Mesaj GÖNDERİLDİ.")
+                    self?.isNewConversation = false
                 } else {
                     print("Mesaj GÖNDERİLEMEDİ.")
                 }
                 
             })
             
-        }  // Eğer yeni bir konuşmaysa BİRDEN FAZLA VERİTABANI İŞLEMLERİNİ BAĞLANTILI BİR ŞEKİLDE SIRASIYLA ŞİMDİ YAPICAZ :
+        }  // Eğer YENİ BİR KONUŞMAYSA BİRDEN FAZLA VERİTABANI İŞLEMLERİNİ BAĞLANTILI BİR ŞEKİLDE SIRASIYLA ŞİMDİ YAPICAZ :
         
         else {
+            guard let conversationId = self.conversationId,let name = self.title else {
+                return
+            }
             
-        } // Eğer yeni bir konuşma değilse  Mevcut konuşma verilerine şimdi eklicez :
+            DatabaseManager2.shared.sendMessage(to: conversationId, otherUserEmail: otherUserEmail, name: name, newMessage: message, completion:
+            {
+                (success) in
+                
+                if success {
+                    print("Mesaj GÖNDERİLDİ.")
+                }
+                else {
+                    print("Mesaj GÖNDERİLEMEDİ.")
+                }
+            })
+            
+            
+        } // Eğer YENİ BİR KONUŞMA DEĞİLSE   mevcut konuşma verilerine şimdi eklicez :
         
     }
     

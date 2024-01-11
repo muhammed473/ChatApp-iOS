@@ -131,7 +131,7 @@ class ConversationsViewController: UIViewController {  // Konuşmalar(Görüşme
         
         let vc = ChatViewController(with: email,id:nil) // Hangi kullanıcıyla sohbet ettiğimiz email 'le anladık...
         vc.isNewConversation = true
-        vc.title = "Fatih Koç" // Sohbet ettiğimiz kişinin başlığını şimdilik RASTGELE FATİH KOÇ  olarak belirledik. Sanki Fatih koç isimli kişiyle sohbet ediyormuşuz gibi düşün.
+        vc.title  = name
         vc.navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(vc, animated: true)
         
