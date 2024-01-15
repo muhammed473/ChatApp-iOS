@@ -8,6 +8,7 @@
 import UIKit
 import MessageKit
 import InputBarAccessoryView // Geliştiricilere sohbet ekranlarını hızlı bir şekilde oluşturma ve özelleştirme imkanı sağlar.
+import SDWebImage
 
 /* Şimdi 2 struct(yapı) kurucaz.Bunlar :
  
@@ -66,6 +67,13 @@ struct Sender : SenderType{ // SenderType : Göndereni temsil eder.(Gönderenin 
     
 } // SenderType : Göndereni temsil eder. ( Gönderici tipi), Protocoldür.
 
+struct Media : MediaItem {
+    var url: URL?
+    var image: UIImage?
+    var placeholderImage: UIImage
+    var size: CGSize
+}
+
 
 class ChatViewController: MessagesViewController { // MessagesViewController SCRİPTİNDEN MİRAS ALDIK DİKKAT ET !!!
 
@@ -121,10 +129,93 @@ class ChatViewController: MessagesViewController { // MessagesViewController SCR
         messagesCollectionView.messagesDataSource = self      // Mesaj veri kaynağı
         messagesCollectionView.messagesLayoutDelegate = self  // Mesaj düzen temsilcisi
         messagesCollectionView.messagesDisplayDelegate = self // Mesaj görüntüleme temsilcisi
+        messagesCollectionView.messageCellDelegate = self
         messageInputBar.delegate = self
-        
+        setupInputButton()
    
     }
+    
+    
+    private func setupInputButton() {
+        
+        let button = InputBarButtonItem()
+        button.setSize(CGSize(width: 36, height: 36), animated: false)
+        button.setImage(UIImage(systemName: "paperclip"), for: .normal)
+        button.onTouchUpInside{
+          [weak self]  (_) in
+            self?.presentInputActionSheet()
+        } // Butona dokunduğumuzda olmasını istediğimiz işlemleri yaparız.
+        messageInputBar.setLeftStackViewWidthConstant(to: 36, animated: false)
+        messageInputBar.setStackViewItems([button], forStack: .left, animated: false)
+        
+    }
+    
+    private func presentInputActionSheet(){
+        
+        let actionSheet = UIAlertController(title: "Medya Ekle", message: "Ne eklemek istersin ?", preferredStyle: .actionSheet)
+        actionSheet.addAction(UIAlertAction(title: "Photo", style: .default , handler: {
+            
+            [weak self] (_) in
+            self?.presentPhotoInputActionSheet()
+        
+        }))
+        
+        actionSheet.addAction(UIAlertAction(title: "Video", style: .default , handler: {
+            
+            (_) in
+            
+        
+        }))
+        
+        actionSheet.addAction(UIAlertAction(title: "Audio", style: .default , handler: {
+            
+           (_) in
+            
+        
+        }))
+        
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel , handler: nil ))
+            
+            
+        present(actionSheet,animated: true)
+        
+    }
+    
+    
+    private func presentPhotoInputActionSheet() {
+        
+        let actionSheet = UIAlertController(title: "Fotoğraf Ekle", message: "Nereden fotoğraf eklemek istiyorsunuz ?", preferredStyle: .actionSheet)
+        actionSheet.addAction(UIAlertAction(title: "Camera", style: .default , handler: {
+            
+            [weak self] (_) in
+           
+            let picker = UIImagePickerController() // picker = Seçici
+            picker.sourceType = .camera
+            picker.delegate = self
+            picker.allowsEditing = true // Secicinin(picker'ın) düzenlemesine izin verildi.
+            self?.present(picker, animated: true)
+        
+        }))
+        
+        actionSheet.addAction(UIAlertAction(title: "Photo Library", style: .default , handler: {
+            
+          [weak self]  (_) in
+            
+            let picker = UIImagePickerController() // picker = Seçici
+            picker.sourceType = .photoLibrary
+            picker.delegate = self
+            picker.allowsEditing = true // Secicinin(picker'ın) düzenlemesine izin verildi.
+            self?.present(picker, animated: true)
+            
+        }))
+                
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel , handler:nil))
+            
+            
+        present(actionSheet,animated: true)
+        
+    }
+    
     
     private func listenForMessages(id:String,shoulScrollToBottom:Bool) {
         
@@ -181,6 +272,77 @@ class ChatViewController: MessagesViewController { // MessagesViewController SCR
 }
 
 
+extension ChatViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate{
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true,completion: nil)
+    } // Resim Secici(Picker) denetleyicisinin İPTAL ETMESİNİ SAĞLAR.
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+       
+        picker.dismiss(animated: true,completion: nil)
+        // Seçtikleri resmi orada çıkarmak istiyoruz :
+        guard let image = info[UIImagePickerController.InfoKey.editedImage] as? UIImage,
+        let imageData = image.pngData(),
+        let messageId = createMessageId(),
+        let conversationId = conversationId ,
+        let name = self.title,
+        let selfSender = self.selfSender else {
+            return
+        }
+        
+        let fileName =  "photo_message_" + messageId.replacingOccurrences(of: " ", with: "-") + ".png"
+        
+        // 1 ) Resimin yüklenmesinin aşağıda yapılması.
+        
+        StorageManager.shared.uploadMessagePhoto(with: imageData, fileName: fileName, completion:
+        {
+          [weak self]  (result) in
+            
+            guard let strongSelf = self else {
+                return
+            }
+            
+            switch result {
+                
+            case  .success(let urlString) :
+                // Şimdi FOTOĞRAF MESAJI GÖNDERMEYE HAZIRIZ..
+                print("FOTOĞRAF MESAJI YÜKLENDİ.")
+               
+                guard let url = URL(string: urlString),
+                      let placeholder = UIImage(systemName: "plus")  else {
+                    return
+                }
+                
+                let media = Media(url: url,image: nil ,placeholderImage: placeholder, size: .zero )
+                let message  = Message(sender:selfSender , messageId: messageId, sentDate: Date(), kind: MessageKind.photo(media))
+                
+                DatabaseManager2.shared.sendMessage(to: conversationId, otherUserEmail: strongSelf.otherUserEmail, name: name, newMessage: message, completion:
+                {
+                   (success) in
+                    
+                    if success {
+                        print("FOTOĞRAF MESAJI GÖNDERİLDİ.")
+                    }
+                    else{
+                        print("FOTOĞRAF MESAJI GÖNDERİLEMEDİ !!!")
+                    }
+                    
+                })
+                
+            case .failure(let error) :
+                print("FOTOĞRAF MESAJI  YÜKLENİRKEN HATA İLE KARŞILAŞTIK.\(error)")
+            
+            }
+            
+        })
+        
+        // 2 ) Resim yüklendikten sonra resimi göndericez.
+        
+    } // Bilgi içeren medyanın(fotograf,video...) toplanmasını bitirilmesidir.
+}
+
+
 extension ChatViewController: MessagesDataSource,MessagesLayoutDelegate,MessagesDisplayDelegate {
     
     func currentSender() -> MessageKit.SenderType { // Burda İlk olarak mevcut mesaj gönderenin kim olduğunu anlıyoruz.
@@ -200,7 +362,48 @@ extension ChatViewController: MessagesDataSource,MessagesLayoutDelegate,Messages
         return messages.count
     }
     
+    func configureMediaMessageImageView(_ imageView: UIImageView, for message: MessageType, at indexPath: IndexPath, in messagesCollectionView: MessagesCollectionView) {
+        
+        // MEDYA MESAJLARINDAN RESİM MESAJININ KENDİSİNİ GÖRÜNTÜLER.MESAJIN İNDEKS YOLUNU ve KOLEKSİYON GÖRÜNÜMÜNÜ GÖRÜRÜZ.
+        guard let message = message as? Message else {
+             return
+        }
+        
+        switch message.kind {
+         case .photo(let media):
+            guard let imageUrl = media.url else {
+                return
+            }
+            imageView.sd_setImage(with: imageUrl, completed: nil)
+        default :
+            break
+        }
+        
+    } // Medya Mesajlarından RESİM GÖRÜNÜMÜNÜ YAPILANDIRIR.
     
+    
+    
+}
+
+
+extension ChatViewController:MessageCellDelegate{
+    
+    func didTapImage(in cell: MessageCollectionViewCell) {
+        guard  let indexPath = messagesCollectionView.indexPath(for: cell) else{
+            return
+        }
+        let message = messages[indexPath.section]
+        switch message.kind {
+         case .photo(let media):
+            guard let imageUrl = media.url else {
+                return
+            }
+            let vc = PhotoViewerViewController(with: imageUrl)
+            self.navigationController?.pushViewController(vc, animated: true)
+        default :
+            break
+        }
+    }
 }
 
 
@@ -274,7 +477,7 @@ extension ChatViewController:InputBarAccessoryViewDelegate {
         print("Oluşturulan MESAJ KİMLİĞİ : \(newIdentifier)")
         
         return newIdentifier
-    } //  Mesaj kimliğinin  ve date,otherUserEmail,senderEmail oluşturulması
+    } //  Mesaj kimliğinin  otherUserEmail,senderEmail,date'li ŞEKİLDE  OLUŞTURULMASI
     
     
 }
