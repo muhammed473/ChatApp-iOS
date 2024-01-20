@@ -11,13 +11,11 @@ import JGProgressHUD
 class NewConversationsViewController: UIViewController  {
 
     
-    public var completion : (([String:String]) -> (Void))? // Bu completion DEĞİŞKENİN TİPİ BİR FONKSİYONDUR(CLOSURE).
- 
+    public var completion : ((SearchResult) -> (Void))? // Bu completion DEĞİŞKENİN TİPİ BİR FONKSİYONDUR(CLOSURE).
     private let spinner  = JGProgressHUD(style: .dark)
-    
     private var users  = [[String:String]]() // SÖZLÜK DİZİSİ
     private var hasFetched = false
-    private var results = [[String:String]]()
+    private var results = [SearchResult]()
     
     private let mySearchBar : UISearchBar = {
         
@@ -30,7 +28,7 @@ class NewConversationsViewController: UIViewController  {
        
         let table = UITableView()
         table.isHidden = true
-        table.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        table.register(NewConversationCell.self, forCellReuseIdentifier: NewConversationCell.identifer)
         return table
         
     }()
@@ -64,7 +62,6 @@ class NewConversationsViewController: UIViewController  {
         
         mySearchBar.becomeFirstResponder() // Bu kod sayesinde ViewDidLoad() Çağrıldığı anda arama çubuğundaki klavyeyi çağırdık.
     }
-    
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -142,21 +139,36 @@ extension NewConversationsViewController: UISearchBarDelegate {
     
     func filterUsers(with terim : String) {
         
-        guard hasFetched else {
+        guard let currentUserEmail = UserDefaults.standard.value(forKey: "email") as? String, hasFetched else {
             return
         }
         
+        let safeEmail = DatabaseManager2.safeEmail(emailAddress: currentUserEmail)
+        
         self.spinner.dismiss()
         
-        let results : [[String:String]] = self.users.filter({
+        let results : [SearchResult] = self.users.filter({
+            
+            guard let email = $0["email"] as? String, email != safeEmail // Mevcut kullanıcıyı( Konuşma yaptığımız kullanıcıyı) ARAMA KISMINDA GÖSTERİLMEMESİNİ SAĞLAR.
+            else {
+                return false
+            }
+            
             guard let name = $0["name"]?.lowercased()  else {
                 return false
             }
             // hasPrefix : Kullanıcıların isimlerinin girdiğimiz  HARF İLE başlayıp başlamadığını kontrol eder.
             return name.hasPrefix(terim.lowercased()) // İsmi Girdiğimiz HARFE UYAN KULLANICILARI BİZE GÖSTERİR !!!
-          
-        })
             
+        }).compactMap {
+            
+            guard let email = $0["email"] as? String, let name = $0["name"] else {
+                return nil
+            }
+            
+            return SearchResult(name: name, email: email)
+        }
+        
         self.results = results
         updateUI()
         
@@ -181,6 +193,12 @@ extension NewConversationsViewController: UISearchBarDelegate {
 }
 
 
+struct SearchResult {
+    let name : String
+    let email : String
+}
+
+
 extension NewConversationsViewController: UITableViewDelegate,UITableViewDataSource{
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -188,10 +206,10 @@ extension NewConversationsViewController: UITableViewDelegate,UITableViewDataSou
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        let cell = myTableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-        cell.textLabel?.text = results[indexPath.row]["name"]
-        // ["name] = name datasına benzer veri çıkar demiş olduk.
+        let model = results[indexPath.row]
+        let cell = myTableView.dequeueReusableCell(withIdentifier: NewConversationCell.identifer, for: indexPath) as! NewConversationCell
+        cell.configure(with: model)
+       
         return cell
     }
     
@@ -206,8 +224,10 @@ extension NewConversationsViewController: UITableViewDelegate,UITableViewDataSou
             self?.completion?(targetUserData)
         })
         
-      
-        
     } // KİŞİLER KONUŞMA BAŞLATICAK
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 90
+    }
     
 }

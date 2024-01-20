@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Firebase
 import FirebaseStorage
 
 final class StorageManager {
@@ -75,12 +76,13 @@ final class StorageManager {
         
     }
     
+    
     /// Konuşma mesajında GÖNDERİLECEK RESMİN YÜKLENMESİ
     public func uploadMessagePhoto(with data: Data,fileName : String,completion : @escaping UploadPictureCompletion ) {
         
         storage.child("message_images/\(fileName)").putData(data, metadata: nil, completion: // Storage'da(Depolama alanında) YENİ KLASÖRE AÇIP ONA YÜKLÜCEZ.
          {
-            (metadata,error) in  // metadata : Bir türün veya nesnenin ÇALIŞMA ZAMANINDA tür bilgilerini(Int,float,string..) tutan veri anlamına gelir.
+           [weak self] (metadata,error) in  // metadata : Bir türün veya nesnenin ÇALIŞMA ZAMANINDA tür bilgilerini(Int,float,string..) tutan veri anlamına gelir.
             
             guard error == nil else {
                 // Failed
@@ -89,7 +91,7 @@ final class StorageManager {
                 return
             }
             
-            let reference = self.storage.child("message_images/\(fileName)").downloadURL {
+             self?.storage.child("message_images/\(fileName)").downloadURL {
                 
                 (url,error) in
                 
@@ -105,6 +107,41 @@ final class StorageManager {
             }
             
         })
+        
+    }
+    
+    
+    /// Konuşma mesajında GÖNDERİLECEK VİDEONUN YÜKLENMESİ
+    public func uploadMessageVideo(with fileUrl: URL,fileName : String,completion : @escaping UploadPictureCompletion ) {
+        
+        // Storage'da(Depolama alanında) YENİ KLASÖRE AÇIP ONA YÜKLÜCEZ.
+        
+        storage.child("message_videos/\(fileName)").putFile(from: fileUrl,metadata: nil,completion: {
+           
+          [weak self]  (metadata,error) in
+            
+            guard error == nil else {
+                print("VİDEO İÇİN FİREBASE'E DOSYA YÜKLENEMEDİ.")
+                completion(.failure(StorageErrors.failedToUpload))
+                return
+            }
+            
+            self?.storage.child("message_videos/\(fileName)").downloadURL {
+              
+                (url,error)  in
+                
+                guard let url = url else {
+                    print("İndireceğimiz(ihtiyacımız olan) url alınamadı.")
+                    completion(.failure(StorageErrors.failedToGetDownloadUrl))
+                    return
+                }
+                
+                let urlString = url.absoluteString // absoluteString = url'in TAM STRİNG yazısını alır.
+                print("İndirmemiz gereken url'yi başarılı bir şekilde şimdi alabildik.")
+                completion(.success(urlString))
+            }
+        })
+     
         
     }
     

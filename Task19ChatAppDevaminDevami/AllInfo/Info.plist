@@ -44,6 +44,8 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Lütfen profil resmi çekmek için izin verin.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Lütfen sesli ve görünütülü (Yani VİDEO) mesaj gönderilmesilmesine izin verin.</string>
 	<key>FacebookAutoLogAppEventsEnabled</key>
 	<true/>
 	<key>NSPhotoLibraryAddUsageDescription</key>

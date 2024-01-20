@@ -9,6 +9,8 @@ import UIKit
 import MessageKit
 import InputBarAccessoryView // Geliştiricilere sohbet ekranlarını hızlı bir şekilde oluşturma ve özelleştirme imkanı sağlar.
 import SDWebImage
+import AVFoundation
+import AVKit
 
 /* Şimdi 2 struct(yapı) kurucaz.Bunlar :
  
@@ -150,6 +152,7 @@ class ChatViewController: MessagesViewController { // MessagesViewController SCR
         
     }
     
+    
     private func presentInputActionSheet(){
         
         let actionSheet = UIAlertController(title: "Medya Ekle", message: "Ne eklemek istersin ?", preferredStyle: .actionSheet)
@@ -162,8 +165,8 @@ class ChatViewController: MessagesViewController { // MessagesViewController SCR
         
         actionSheet.addAction(UIAlertAction(title: "Video", style: .default , handler: {
             
-            (_) in
-            
+          [weak self]  (_) in
+            self?.presentVideoInputActionSheet()
         
         }))
         
@@ -203,7 +206,46 @@ class ChatViewController: MessagesViewController { // MessagesViewController SCR
             
             let picker = UIImagePickerController() // picker = Seçici
             picker.sourceType = .photoLibrary
+            //picker.mediaTypes = ["public.image"]
             picker.delegate = self
+            picker.allowsEditing = true // Secicinin(picker'ın) düzenlemesine izin verildi.
+            self?.present(picker, animated: true)
+            
+        }))
+                
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel , handler:nil))
+            
+            
+        present(actionSheet,animated: true)
+        
+    }
+    
+    
+    private func presentVideoInputActionSheet() {
+        
+        let actionSheet = UIAlertController(title: "Video Ekle", message: "Nereden video eklemek istiyorsunuz ?", preferredStyle: .actionSheet)
+        actionSheet.addAction(UIAlertAction(title: "Camera", style: .default , handler: {
+            
+            [weak self] (_) in
+           
+            let picker = UIImagePickerController() // picker = Seçici
+            picker.sourceType = .camera
+            picker.delegate = self
+            picker.mediaTypes = ["public.movie"]
+            picker.allowsEditing = true // Secicinin(picker'ın) düzenlemesine izin verildi.
+            self?.present(picker, animated: true)
+        
+        }))
+        
+        actionSheet.addAction(UIAlertAction(title: "Library", style: .default , handler: {
+            
+          [weak self]  (_) in
+            
+            let picker = UIImagePickerController() // picker = Seçici
+            picker.sourceType = .photoLibrary
+            picker.delegate = self
+            picker.mediaTypes = ["public.movie"] // SADECE VİDEOLARI SEÇEÇEK ŞEKİLDE SINIRLADIK.
+            picker.videoQuality = .typeMedium
             picker.allowsEditing = true // Secicinin(picker'ın) düzenlemesine izin verildi.
             self?.present(picker, animated: true)
             
@@ -282,60 +324,112 @@ extension ChatViewController: UIImagePickerControllerDelegate, UINavigationContr
        
         picker.dismiss(animated: true,completion: nil)
         // Seçtikleri resmi orada çıkarmak istiyoruz :
-        guard let image = info[UIImagePickerController.InfoKey.editedImage] as? UIImage,
-        let imageData = image.pngData(),
-        let messageId = createMessageId(),
+        guard let messageId = createMessageId(),
         let conversationId = conversationId ,
         let name = self.title,
         let selfSender = self.selfSender else {
             return
         }
         
-        let fileName =  "photo_message_" + messageId.replacingOccurrences(of: " ", with: "-") + ".png"
-        
-        // 1 ) Resimin yüklenmesinin aşağıda yapılması.
-        
-        StorageManager.shared.uploadMessagePhoto(with: imageData, fileName: fileName, completion:
-        {
-          [weak self]  (result) in
+        if let image = info[.editedImage] as? UIImage,let imageData = image.pngData(){
             
-            guard let strongSelf = self else {
-                return
-            }
+            let fileName =  "photo_message_" + messageId.replacingOccurrences(of: " ", with: "-") + ".png"
             
-            switch result {
+            // 1 ) Resimin yüklenmesinin aşağıda yapılması.
+            
+            StorageManager.shared.uploadMessagePhoto(with: imageData, fileName: fileName, completion:
+            {
+              [weak self]  (result) in
                 
-            case  .success(let urlString) :
-                // Şimdi FOTOĞRAF MESAJI GÖNDERMEYE HAZIRIZ..
-                print("FOTOĞRAF MESAJI YÜKLENDİ.")
-               
-                guard let url = URL(string: urlString),
-                      let placeholder = UIImage(systemName: "plus")  else {
+                guard let strongSelf = self else {
                     return
                 }
                 
-                let media = Media(url: url,image: nil ,placeholderImage: placeholder, size: .zero )
-                let message  = Message(sender:selfSender , messageId: messageId, sentDate: Date(), kind: MessageKind.photo(media))
-                
-                DatabaseManager2.shared.sendMessage(to: conversationId, otherUserEmail: strongSelf.otherUserEmail, name: name, newMessage: message, completion:
-                {
-                   (success) in
+                switch result {
                     
-                    if success {
-                        print("FOTOĞRAF MESAJI GÖNDERİLDİ.")
-                    }
-                    else{
-                        print("FOTOĞRAF MESAJI GÖNDERİLEMEDİ !!!")
+                case  .success(let urlString) :
+                    // Şimdi FOTOĞRAF MESAJI GÖNDERMEYE HAZIRIZ..
+                    print("FOTOĞRAF MESAJI YÜKLENDİ.")
+                   
+                    guard let url = URL(string: urlString),
+                          let placeholder = UIImage(systemName: "plus")  else {
+                        return
                     }
                     
-                })
+                    let media = Media(url: url,image: nil ,placeholderImage: placeholder, size: .zero )
+                    let message  = Message(sender:selfSender , messageId: messageId, sentDate: Date(), kind: MessageKind.photo(media))
+                    
+                    DatabaseManager2.shared.sendMessage(to: conversationId, otherUserEmail: strongSelf.otherUserEmail, name: name, newMessage: message, completion:
+                    {
+                       (success) in
+                        
+                        if success {
+                            print("FOTOĞRAF MESAJI GÖNDERİLDİ.")
+                        }
+                        else{
+                            print("FOTOĞRAF MESAJI GÖNDERİLEMEDİ !!!")
+                        }
+                        
+                    })
+                    
+                case .failure(let error) :
+                    print("FOTOĞRAF MESAJI  YÜKLENİRKEN HATA İLE KARŞILAŞTIK.\(error)")
                 
-            case .failure(let error) :
-                print("FOTOĞRAF MESAJI  YÜKLENİRKEN HATA İLE KARŞILAŞTIK.\(error)")
+                }
+                
+            })
+        } // Fotoğraf göndermek
+        
+        else if let videoUrl = info[.mediaURL]  as? URL {
+          
+            let fileName =  "video_message_" + messageId.replacingOccurrences(of: " ", with: "-") + ".mov"
             
-            }
+            StorageManager.shared.uploadMessageVideo(with: videoUrl, fileName: fileName, completion:
+            {
+              [weak self]  (result) in
+                
+                guard let strongSelf = self else {
+                    return
+                }
+                
+                switch result {
+                    
+                case  .success(let urlString) :
+                    // Şimdi FOTOĞRAF MESAJI GÖNDERMEYE HAZIRIZ..
+                    print("VİDEO MESAJI YÜKLENDİ.")
+                   
+                    guard let url = URL(string: urlString),
+                          let placeholder = UIImage(systemName: "plus")  else {
+                        return
+                    }
+                    
+                    let media = Media(url: url,image: nil ,placeholderImage: placeholder, size: .zero )
+                    let message  = Message(sender:selfSender , messageId: messageId, sentDate: Date(), kind: MessageKind.video(media))
+                    
+                    DatabaseManager2.shared.sendMessage(to: conversationId, otherUserEmail: strongSelf.otherUserEmail, name: name, newMessage: message, completion:
+                    {
+                       (success) in
+                        
+                        if success {
+                            print("VİDEO MESAJI GÖNDERİLDİ.")
+                        }
+                        else{
+                            print("VİDEO MESAJI GÖNDERİLEMEDİ !!!")
+                        }
+                        
+                    })
+                    
+                case .failure(let error) :
+                    print("VİDEO MESAJI  YÜKLENİRKEN HATA İLE KARŞILAŞTIK.\(error)")
+                
+                }
+                
+            })
+             
             
-        })
+        } // Video göndermek
+        
+      
         
         // 2 ) Resim yüklendikten sonra resimi göndericez.
         
@@ -400,10 +494,21 @@ extension ChatViewController:MessageCellDelegate{
             }
             let vc = PhotoViewerViewController(with: imageUrl)
             self.navigationController?.pushViewController(vc, animated: true)
+            
+        case .video(let media):  // GÖNDERİLEN VİDEOYUYU AÇIP İZLEMEMİZİ SAĞLAR.
+           guard let videoUrl = media.url else {
+               return
+           }
+       
+            let vc = AVPlayerViewController()
+            vc.player = AVPlayer(url: videoUrl)
+            present(vc,animated: true)
+            
         default :
             break
         }
     }
+    
 }
 
 
