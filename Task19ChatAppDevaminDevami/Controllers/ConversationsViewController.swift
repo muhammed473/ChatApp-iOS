@@ -44,7 +44,6 @@ class ConversationsViewController: UIViewController {  // Konuşmalar(Görüşme
         return table
     }()
     
-    
     private let noConversationsLabel : UILabel = { // noConversationsLabel = Konuşma yok etiketi
         let label = UILabel()
         label.text = "No Conversations!"
@@ -55,6 +54,7 @@ class ConversationsViewController: UIViewController {  // Konuşmalar(Görüşme
         return label
     }()
    
+    private var loginObserver : NSObjectProtocol?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -71,6 +71,19 @@ class ConversationsViewController: UIViewController {  // Konuşmalar(Görüşme
         setupTableView()
         fetchConversations()
         startListeningForConversations()
+        
+        loginObserver = NotificationCenter.default.addObserver(
+                                                forName: Notification.Name.didLogInNotification,
+                                                object: nil,
+                                                queue: OperationQueue.main,
+                                                using: { [weak self] (_) in // Kullanım bir geri arama olacak ve bu buradaki bildirime iletecek.
+             
+            guard let strongSelf = self else {
+                return
+            }
+            
+            strongSelf.startListeningForConversations()
+         })
     }
     
     
@@ -79,6 +92,11 @@ class ConversationsViewController: UIViewController {  // Konuşmalar(Görüşme
         guard let email = UserDefaults.standard.value(forKey: "email") as? String else {
             return
         }
+        
+        if let observer = loginObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        
         print("Konuşmaları göstermeye başla...")
         let safeEmail = DatabaseManager2.safeEmail(emailAddress: email)
         
@@ -153,26 +171,19 @@ class ConversationsViewController: UIViewController {  // Konuşmalar(Görüşme
     
     
     private func validateAuth() { // Kimlik Doğrulama Metodu
-        
-   
         if FirebaseAuth.Auth.auth().currentUser == nil  {
-            
-       
             let vc = LoginViewController()
             let nav = UINavigationController(rootViewController: vc)
             nav.modalPresentationStyle = UIModalPresentationStyle.fullScreen
             present(nav, animated: false)
-            
         }
-        
+
     }
     
     
     private func setupTableView() {
         mytableView.delegate = self
         mytableView.dataSource = self
-        
-        
     }
     
     
@@ -206,11 +217,38 @@ extension ConversationsViewController : UITableViewDelegate,UITableViewDataSourc
         vc.title = model.name
         vc.navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(vc, animated: true)
-    }
+    } // Hücre Seçimi
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 120
-    } // Satır Yüksekliği
+    } // Hücre Yüksekliği
+    
+    
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+        return .delete
+    } // Hücreyi silmek,eklemek
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) { // Bu metotta Üstteki metotta yapılan HÜCREYİ SİLME, EKLEME eylemlerinden sonra olmasını istediğin şeyleri yaparsın.
+        // Birincisi üstte silme eylemi gerçekleştirdiğimiz için şimdi BİRİNCİSİ SATIRI GERÇEKTEN SİLİCEZ.İKİNCİSİ İSE DESTEK MODELİNİ GÜNCELLİCEZ.
+        
+        if editingStyle == .delete {
+            
+            tableView.beginUpdates()
+           
+            let conversationId = conversations[indexPath.row].id
+            DatabaseManager2.shared.deleteConversation(conversationId: conversationId, completion:{
+              [weak self]  (success) in
+                
+                if success {
+                    tableView.deleteRows(at: [indexPath], with: .left)
+                    self?.conversations.remove(at: indexPath.row)
+                }
+            })
+           
+            
+            tableView.endUpdates()
+        }
+    }
 }
 
 
