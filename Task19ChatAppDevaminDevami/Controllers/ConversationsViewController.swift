@@ -131,8 +131,31 @@ class ConversationsViewController: UIViewController {  // Konuşmalar(Görüşme
             
              [weak self]  (result) in
             
-          print("\(result)") // Seçilen kişinin bilgileri
-            self?.createNewConversation(result: result)
+            guard let strongSelf = self else {
+                return
+            }
+            
+            print("\(result)") // Seçilen kişinin bilgileri
+            
+            let currentConversations = strongSelf.conversations
+            
+            /// Eğer KONUŞMA LİSTEMDE VARSA YENİ BİR SOHBET OLUŞTURMA VAR OLAN SOHBETE DEVAM ET.
+            if let targetConversation = currentConversations.first(where:
+            {
+                $0.otherUserEmail == DatabaseManager2.safeEmail(emailAddress: result.email) // Bu KOŞUL İFADEMDİR.Eğer var olan KONUŞMALARIMIZDAKi MAİL DATABASE'DEKİ MAİLE EŞİTSE
+            }) {
+                let vc = ChatViewController(with: targetConversation.otherUserEmail,id:targetConversation.id) // Hangi kullanıcıyla sohbet ettiğimiz email 'le anladık...
+                vc.isNewConversation = false
+                vc.title  = targetConversation.name
+                vc.navigationItem.largeTitleDisplayMode = .never
+                strongSelf.navigationController?.pushViewController(vc, animated: true)
+            }
+            
+            /// Eğer KONUŞMA LİSTEMDE YOKSA YENİ BİR SOHBET OLUŞTUR.
+            else{
+                strongSelf.createNewConversation(result: result)
+            }
+           
             
         }
         let navVC = UINavigationController(rootViewController: vc)
@@ -144,13 +167,34 @@ class ConversationsViewController: UIViewController {  // Konuşmalar(Görüşme
     private func createNewConversation(result : SearchResult) {
         
         let name = result.name
-        let email = result.email
+        let email = DatabaseManager2.safeEmail(emailAddress: result.email )
           
-        let vc = ChatViewController(with: email,id:nil) // Hangi kullanıcıyla sohbet ettiğimiz email 'le anladık...
-        vc.isNewConversation = true
-        vc.title  = name
-        vc.navigationItem.largeTitleDisplayMode = .never
-        navigationController?.pushViewController(vc, animated: true)
+        /// Bu iki kullanıcıyla konuşmanın olup olmadığını KONTROL EDİN.
+        /// Eğer silip yeniden konuşma gibi bi durum VARSA KONUŞMAYI YENİDEN KULLAN.Ve Mesaj attığımızda konuşmayı ekrandaki listede tekrar göster.
+        DatabaseManager2.shared.conversationExists(with: email, completion: {
+           [weak self] (result) in
+            guard let strongSelf = self else {
+                return
+            }
+            switch result {
+            case .success(let conversationId) :
+                let vc = ChatViewController(with: email,id:conversationId)
+                 vc.isNewConversation = false
+                 vc.title  = name
+                 vc.navigationItem.largeTitleDisplayMode = .never
+                 strongSelf.navigationController?.pushViewController(vc, animated: true)
+            case .failure(_) :
+        /// EĞER silip yeniden konuşma gibi YOKSA yani DAHA ÖNCE KARŞILIKLI HİÇ SOHBET EDİLMEMİŞSE aşağıdaki kodları kullan.
+               let vc = ChatViewController(with: email,id:nil) // Hangi kullanıcıyla sohbet ettiğimiz email 'le anladık...
+                vc.isNewConversation = true
+                vc.title  = name
+                vc.navigationItem.largeTitleDisplayMode = .never
+                strongSelf.navigationController?.pushViewController(vc, animated: true)
+            }
+        })
+        
+        
+      
         
     }
     
@@ -212,12 +256,15 @@ extension ConversationsViewController : UITableViewDelegate,UITableViewDataSourc
         tableView.deselectRow(at: indexPath, animated: true) // Tablo hücresini seçtiğimizde seçili durumdan çıkarmak ve kullanıcının etkileşime devam etmesine olanak tanımak için kullanılır.
         
         let model = conversations[indexPath.row]
-        
+        openConversation(model)
+    } // Hücre Seçimi
+    
+    func openConversation(_ model:Conversation){
         let vc = ChatViewController(with: model.otherUserEmail, id: model.id)
         vc.title = model.name
         vc.navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(vc, animated: true)
-    } // Hücre Seçimi
+    }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 120
@@ -240,8 +287,8 @@ extension ConversationsViewController : UITableViewDelegate,UITableViewDataSourc
               [weak self]  (success) in
                 
                 if success {
-                    tableView.deleteRows(at: [indexPath], with: .left)
                     self?.conversations.remove(at: indexPath.row)
+                    tableView.deleteRows(at: [indexPath], with: .left)
                 }
             })
            
